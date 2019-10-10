@@ -224,6 +224,9 @@ type
 
 implementation
 
+uses
+  Utils.SoftwareVersion, uCbz;
+
 constructor TZipFile.Create;
 begin
   inherited Create;
@@ -280,6 +283,13 @@ begin
       if not SysUtils.FileExists(FileName) then
       begin
         fs := TFileStream.Create(FileName, fmCreate);
+        Comment := CbzComment +
+        {$ifdef darwin}
+                   ' OsX' +
+        {$else}
+                   ' Linux' +
+        {$endif}
+                   ' v' + GetFileVersion;
         //write EOCDH
         fs.WriteBuffer(endofcdrecord.start, SizeOf(endofcdrecord.start));
         if Length(endofcdrecord.add.ZIPfilecomment) > 0 then
