@@ -529,12 +529,17 @@ begin
     lCompressed := result;
     try
       Result := TMemoryStream.Create;
-
-      zds := Tdecompressionstream.create(lCompressed, True);
       try
-        result.CopyFrom(zds, FileHeaderList[index].start.uncompressedsize);
-      finally
-        zds.Free ;
+        zds := Tdecompressionstream.create(lCompressed, True);
+        try
+          result.CopyFrom(zds, FileHeaderList[index].start.uncompressedsize);
+        finally
+          zds.Free ;
+        end;
+      except
+        result.Free;
+        result := nil;
+        raise;
       end;
     finally
       lCompressed.Free;
