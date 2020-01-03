@@ -46,7 +46,6 @@ begin
   try
     tmp.Width := Bitmap.Height;
     tmp.Height := Bitmap.Width;
-    tmp.PixelFormat:=Bitmap.PixelFormat;
     dst := TLazIntfImage.Create(0, 0);
     try
       dst.LoadFromBitmap(tmp.Handle, tmp.MaskHandle);
@@ -55,8 +54,7 @@ begin
         src.LoadFromBitmap(bitmap.Handle, bitmap.MaskHandle);
         u := bitmap.width - 1;
         v := bitmap.height - 1;
-        for i := 0 to u do
-        begin
+        for i := 0 to u do begin
           t := u - i;
           for j := 0 to v do
             dst.Colors[j, t] := src.Colors[i, j];
