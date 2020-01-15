@@ -204,6 +204,7 @@ type
     function FileExists(AFileName: string): boolean;
     function FindFirst(var SearchResult : TZipSearchRec): integer;
     function FindNext(var SearchResult : TZipSearchRec): integer;
+	procedure AddFiles(const Path, FileMask : String);
     procedure AppendFileFromDisk(AFileName, ZIPFileName: string; aLvl : Tcompressionlevel = clmax);
     procedure AppendStream(Stream: TStream; ZIPFileName: string;
                            FileDateTime: TDateTime;
@@ -690,6 +691,42 @@ begin
 
     add.filename := FileName;
     add.extrafield := '';
+  end;
+end;
+
+procedure TZipFile.AddFiles(const Path, FileMask : String);
+  procedure GetFiles(const Path, Filemask : String; List : TStringList);
+  var
+    rec : SysUtils.TSearchRec;
+  begin
+    if SysUtils.Findfirst(IncludeTrailingPathDelimiter(Path) + FileMask, faAnyfile, rec) = 0 then
+    begin
+      repeat
+        if (rec.Name <> '.') and (rec.Name <> '..') then
+          if (rec.Attr and faDirectory) = faDirectory then
+            GetFiles(IncludeTrailingPathDelimiter(Path) + IncludeTrailingPathDelimiter(rec.Name), Filemask, List)
+          else
+            List.Add(IncludeTrailingPathDelimiter(Path) + rec.Name); 
+      until SysUtils.FindNext(rec) <> 0;
+      FindClose(rec);
+    end;
+  end;
+
+var
+  List : TStringList;
+  i : Integer;
+  s : string;
+begin
+  List := TStringList.Create;
+  try
+    GetFiles(Path, FileMask, List);
+    for i := 0 to List.Count - 1 do
+    begin
+      s := StringReplace(List[i], Path, '', [rfReplaceAll]);
+      s := StringReplace(s, '\', '/', [rfReplaceAll]);
+      AppendFileFromDisk(List[i], s, clnone);
+    end;
+  finally
   end;
 end;
 
