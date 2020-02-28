@@ -13,8 +13,8 @@ type
 
   TJsonObject = Class(TPersistent)
   public
-    class function Load(const aFileName : String; aClass : TClass):TObject;
-    procedure Save(const aFileName : String);
+    class function Load(const aFileName : String; aObject : TObject):TObject;
+    procedure Save(const aFileName: String);
   end;
 
 implementation
@@ -24,17 +24,17 @@ uses
 
 { TJsonObject }
 
-class function TJsonObject.Load(const aFileName: String; aClass : TClass): Tobject;
+class function TJsonObject.Load(const aFileName: String; aObject : TObject): TObject;
 var
   DeStreamer: TJSONDeStreamer;
   t : TStringList;
 begin
-  result := aClass.Create;
+  result := aObject;
   try
-    DeStreamer := TJSONDeStreamer.Create(nil);
-    try
-      if FileExists(aFileName) then
-      begin
+    if FileExists(aFileName) then
+    begin
+      DeStreamer := TJSONDeStreamer.Create(nil);
+      try
         t := TStringList.Create;
         try
           t.LoadFromFile(aFileName);
@@ -42,9 +42,9 @@ begin
         finally
           t.Free;
         end
+      finally
+        DeStreamer.Free;
       end;
-    finally
-      DeStreamer.Free;
     end;
   except
   end;
@@ -56,6 +56,9 @@ var
   s : String;
   t : TStringList;
 begin
+  if not DirectoryExists(ExtractFilePath(aFileName)) then
+    ForceDirectories(ExtractFilePath(aFileName));
+
   Streamer := TJSONStreamer.Create(nil);
   try
     Streamer.Options := Streamer.Options + [jsoTStringsAsArray]; // Save strings as JSON array
