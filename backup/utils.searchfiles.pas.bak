@@ -36,24 +36,6 @@ type
     procedure Cancel(Sender : TObject);
   end;
 
-
-function ThreadedSearchFiles(const Path, Masks : String;
-                             CallBack : TFoundFileCallback;
-                             Terminate : TNotifyEvent;
-                             OnProgress : TProgressEvent = nil;
-                             const str_scanning : string = '';
-                             SearchFileOptions : TSearchFileOptions = [sfoRecurse]):TThread;
-
-procedure GetDirectories(const Path : String; var Dirs : TStringArray);
-procedure GetFiles(const Path, sMasks : String; Files : TStringList);
-procedure GetFiles(const Path : string; Masks : Array of String; Files : TStringList);
-
-implementation
-
-uses
-  Utils.Masks, Utils.NaturalSortStringList;
-
-type
   TThreadSearchFiles = Class(TCancellableThread)
   private
     FPath,
@@ -78,6 +60,23 @@ type
                        SearchFileOptions : TSearchFileOptions = [sfoRecurse]);
     procedure Execute; override;
   End;
+
+function ThreadedSearchFiles(const Path, Masks : String;
+                             CallBack : TFoundFileCallback;
+                             Terminate : TNotifyEvent;
+                             OnProgress : TProgressEvent = nil;
+                             const str_scanning : string = '';
+                             SearchFileOptions : TSearchFileOptions = [sfoRecurse]):TThread;
+
+procedure GetDirectories(const Path : String; var Dirs : TStringArray);
+procedure GetFiles(const Path, sMasks : String; Files : TStringList);
+procedure GetFiles(const Path : string; Masks : Array of String; Files : TStringList);
+
+implementation
+
+uses
+  Utils.Masks, Utils.NaturalSortStringList;
+
 
 { TCancellableThread }
 

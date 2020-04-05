@@ -49,7 +49,7 @@ var
         inc(retry);
         sleep(250);
       end;
-    until (retry >=20) or done;
+    until (retry >=5) or done;
   end;
 
 begin
