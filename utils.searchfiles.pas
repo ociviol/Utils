@@ -248,7 +248,7 @@ begin
             Exit;
 
           try
-            FMsg := Fstr_scanning +' (' + FPath + ')';
+            FMsg := Fstr_scanning + FPath;
             FFile := Dirs[z];
             Synchronize(@DoCallBackTrue);
             Synchronize(@DoProgress);

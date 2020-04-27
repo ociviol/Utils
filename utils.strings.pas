@@ -12,12 +12,94 @@ interface
 uses
   Classes, SysUtils;
 
+type
+
+  { TThreadStringList }
+
+  TThreadStringList = Class(TStringList)
+  private
+    FLock : TThreadList;
+  protected
+    function Get(Index: Integer): string; override;
+    function GetObject(Index: Integer): TObject; override;
+    procedure Put(Index: Integer; const S: string); override;
+    procedure PutObject(Index: Integer; AObject: TObject); override;
+    function GetCount: Integer; override;
+  public
+    constructor Create;
+    destructor Destroy; override;
+  end;
+
 
 //Functions
 
 function AnsiNaturalCompareStrings(str1, str2: string; vCaseSensitive: boolean = True): integer;
 
 implementation
+
+{ TThreadStringList }
+
+function TThreadStringList.Get(Index: Integer): string;
+begin
+  Flock.LockList;
+  try
+    Result:=inherited Get(Index);
+  finally
+    FLock.UnlockList;
+  end;
+end;
+
+function TThreadStringList.GetObject(Index: Integer): TObject;
+begin
+  Flock.LockList;
+  try
+    Result:=inherited GetObject(Index);
+  finally
+    FLock.UnlockList;
+  end;
+end;
+
+procedure TThreadStringList.Put(Index: Integer; const S: string);
+begin
+  Flock.LockList;
+  try
+    inherited Put(Index, S);
+  finally
+    FLock.UnlockList;
+  end;
+end;
+
+procedure TThreadStringList.PutObject(Index: Integer; AObject: TObject);
+begin
+  Flock.LockList;
+  try
+    inherited PutObject(Index, AObject);
+  finally
+    FLock.UnlockList;
+  end;
+end;
+
+function TThreadStringList.GetCount: Integer;
+begin
+  Flock.LockList;
+  try
+    Result:=inherited GetCount;
+  finally
+    FLock.UnlockList;
+  end;
+end;
+
+constructor TThreadStringList.Create;
+begin
+  Flock := TThreadList.Create;
+  inherited Create;
+end;
+
+destructor TThreadStringList.Destroy;
+begin
+  flock.Free;
+  inherited Destroy;
+end;
 
 
 function AnsiNaturalCompareStrings(str1, str2: string; vCaseSensitive: boolean = True): integer;
