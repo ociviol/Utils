@@ -24,6 +24,9 @@ type
   end;
 
 function GetIlog(const Filename : string; Activate : Boolean = True; MaxLogSizeMb : integer = 10):ILog;
+function MakeLong(aHighWord, aLowWord : word):longint; inline;
+function LowWord(Value : longint):Integer; inline;
+function HighWord(Value : longint):Integer; inline;
 
 implementation
 
@@ -89,6 +92,23 @@ type
 function GetIlog(const Filename : string; Activate : Boolean = True; MaxLogSizeMb : integer = 10):ILog;
 begin
   result := TLog.Create(Filename, Activate, MaxLogSizeMb) as ILog;
+end;
+
+function MakeLong(aHighWord, aLowWord : word):longint; inline;
+begin
+  result := aHighWord shl 16;
+  inc(result, aLowWord);
+end;
+
+function LowWord(Value : longint):Integer; inline;
+begin
+  result := (Value shl 16);
+  result := result shr 16;
+end;
+
+function HighWord(Value : longint):Integer; inline;
+begin
+  Result := (Value shr 16);
 end;
 
 function SafeOpen(const Filename : string; Mode : Word):TFileStream;
