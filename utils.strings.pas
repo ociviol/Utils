@@ -17,7 +17,7 @@ type
   { TThreadStringList }
 
   TThreadStringList = Class(TStringList)
-  private
+  protected
     FLock : TThreadList;
   protected
     function Get(Index: Integer): string; override;
