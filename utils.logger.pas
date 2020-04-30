@@ -318,16 +318,17 @@ begin
         Active := True;
 
         for f in files do
-        begin
-          st := SafeOpen(f, fmOpenRead or fmShareDenyWrite);
-          if Assigned(st) then
-          try
-            AppendStream(st, ExtractFileName(f), now);
-          finally
-            st.Free;
-            SafeDelete(f);
+          if f.Contains(ExtractFileName(FFilename)) then
+          begin
+            st := SafeOpen(f, fmOpenRead or fmShareDenyWrite);
+            if Assigned(st) then
+            try
+              AppendStream(st, ExtractFileName(f), now);
+            finally
+              st.Free;
+              SafeDelete(f);
+            end;
           end;
-        end;
         Active := False;
       except
       end;
