@@ -21,6 +21,7 @@ type
   ['{36573377-D6D3-42F0-BD07-5ED2806D392E}']
     procedure Log(const msg : string);
     procedure SetActive(const bState : boolean);
+    function ArchivePath:String;
   end;
 
 function GetIlog(const Filename : string; Activate : Boolean = True; MaxLogSizeMb : integer = 10):ILog;
@@ -79,13 +80,13 @@ type
     FMaxLogSizeMb : Integer;
     procedure StopThread;
     procedure ZipLogs;
-    function GetArchivePath:String; inline;
   public
     constructor Create(const Filename : String; Activate : Boolean; MaxLogSizeMb : integer);
     destructor Destroy; override;
     procedure Log(const msg : string);
     procedure Dump;
     procedure SetActive(const bState : boolean);
+    function ArchivePath:String;
   End;
 
 
@@ -245,7 +246,7 @@ begin
   StopThread;
   FList.Free;
   ZipLogs;
-  CheckArchivedLogs(FFilename, GetArchivePath);
+  CheckArchivedLogs(FFilename, ArchivePath);
   inherited;
 end;
 
@@ -275,7 +276,7 @@ begin
     FLogThread.Dump;
 end;
 
-function TLog.GetArchivePath: String;
+function TLog.ArchivePath: String;
 begin
   result := IncludeTrailingPathDelimiter(IncludeTrailingPathDelimiter(ExtractFilePath(FFilename)) + 'Archives');
   if not DirectoryExists(result) then
@@ -305,7 +306,7 @@ begin
   z := TZipFile.Create;
   with z do
   try
-    FileName := GetArchivePath +
+    FileName := ArchivePath +
                 FormatDateTime('yyyy-mm-dd - ', now) +
                 ChangeFileExt(ExtractFileName(FFilename), '.zip');
 

@@ -207,7 +207,8 @@ end;
 
 procedure TThreadSearchFiles.DoProgress;
 begin
-  FOnProgress(Self, ProgressID, FCur, FMax, FMsg);
+  if Assigned(FOnProgress) then
+    FOnProgress(Self, ProgressID, FCur, FMax, FMsg);
 end;
 
 procedure TThreadSearchFiles.DoCallBackTrue;
@@ -240,21 +241,25 @@ begin
       if sfoFolders in FOptions then
       begin
         SetLength(Dirs, 0);
-        GetDirectories(FPath, Dirs);
-        for z := Low(Dirs) to High(Dirs) do
-        begin
-          if Fcanceled then Terminate;
-          if Terminated then
-            Exit;
+        try
+          GetDirectories(FPath, Dirs);
+          for z := Low(Dirs) to High(Dirs) do
+          begin
+            if Fcanceled then Terminate;
+            if Terminated then
+              Exit;
 
-          try
-            FMsg := Fstr_scanning + FPath;
-            FFile := Dirs[z];
-            Synchronize(@DoCallBackTrue);
-            Synchronize(@DoProgress);
-            Sleep(10);
-          except
+            try
+              FMsg := Fstr_scanning + FPath;
+              FFile := Dirs[z];
+              Synchronize(@DoCallBackTrue);
+              Synchronize(@DoProgress);
+              Sleep(10);
+            except
+            end;
           end;
+        finally
+          SetLength(dirs, 0);
         end;
       end;
 
@@ -285,12 +290,13 @@ begin
             end;
           end;
         finally
-          Files.FRee;
+          Files.Free;
         end;
       end;
     finally
       FCur := 0;
       FMax := 0;
+
       if Assigned(FOnProgress) then
         Synchronize(@&DoProgress);
     end;
