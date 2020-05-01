@@ -28,6 +28,7 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    function HasObject(aObject: TObject): Boolean;
   end;
 
 
@@ -99,6 +100,16 @@ destructor TThreadStringList.Destroy;
 begin
   flock.Free;
   inherited Destroy;
+end;
+
+function TThreadStringList.HasObject(aObject: TObject): Boolean;
+var
+  i : integer;
+begin
+  for i := 0 to Count - 1 do
+    if Objects[i] = aObject then
+      exit(result);
+  result := false;
 end;
 
 

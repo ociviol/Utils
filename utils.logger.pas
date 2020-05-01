@@ -10,7 +10,7 @@ unit Utils.Logger;
 interface
 
 uses
-  Classes, Sysutils
+  Classes, Sysutils, Forms
 {$if defined(Linux) or defined(Darwin)}
   ,cthreads
 {$endif}
@@ -20,8 +20,10 @@ type
   ILog = interface
   ['{36573377-D6D3-42F0-BD07-5ED2806D392E}']
     procedure Log(const msg : string);
-    procedure SetActive(const bState : boolean);
+    procedure SetActive(const bState : boolean; aOwner : TForm);
     function ArchivePath:String;
+    procedure AttachLog(aOwner : TForm);
+    procedure DetachLog;
   end;
 
 function GetIlog(const Filename : string; Activate : Boolean = True; MaxLogSizeMb : integer = 10):ILog;
@@ -35,6 +37,9 @@ uses
 {$if defined(Linux) or defined(Darwin)}
   unix,
 {$endif}
+  Controls,
+  StdCtrls,
+  ExtCtrls,
   DateUtils,
   Utils.Files,
   Utils.Searchfiles,
@@ -60,6 +65,7 @@ type
     FFilename : String;
     FList : TLogList;
     FStartedDate : TDateTime;
+
     procedure ZipLog(const aFilename : string);
     function GetDay:Integer;
     function MakeFilename(const Filename: String): String;
@@ -71,6 +77,8 @@ type
     procedure Dump;
   End;
 
+  { TLog }
+
   TLog = Class(TInterfacedObject, Ilog)
   private
     FFilename : String;
@@ -78,15 +86,23 @@ type
     FLogThread : TLogThread;
     FActive : Boolean;
     FMaxLogSizeMb : Integer;
+    FLogpanel,
+    FLogToolPanel: TPanel;
+    FLogList : TListbox;
+    FLock : TThreadList;
+
     procedure StopThread;
     procedure ZipLogs;
+    procedure DefBtnClick(Sender : Tobject);
   public
     constructor Create(const Filename : String; Activate : Boolean; MaxLogSizeMb : integer);
     destructor Destroy; override;
     procedure Log(const msg : string);
     procedure Dump;
-    procedure SetActive(const bState : boolean);
+    procedure SetActive(const bState : boolean; aOwner : TForm = nil);
     function ArchivePath:String;
+    procedure AttachLog(aOwner : TForm);
+    procedure DetachLog;
   End;
 
 
@@ -219,11 +235,28 @@ end;
 { TLog }
 
 procedure TLog.Log(const msg: string);
+var
+  s : string;
 begin
   if FActive then
-  FList.AddItem(Format('%s Thread ID : %.8d : %s',
-                         [FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', now),
-                          QWord(GetCurrentThreadId()), Msg]));
+  begin
+    s := Format('%s Thread ID : %.8d : %s',
+                [FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', now),
+                QWord(GetCurrentThreadId()), Msg]);
+
+    FLock.lockList;
+    try
+      try
+        if Assigned(FLogList) then
+          FLogList.AddItem(s, nil);
+      except
+      end;
+    finally
+      Flock.Unlocklist;
+    end;
+
+    FList.AddItem(s);
+  end;
 end;
 
 constructor TLog.Create(const Filename: String; Activate : Boolean; MaxLogSizeMb : integer);
@@ -233,6 +266,10 @@ begin
   FActive := Activate;
   FList := TLogList.Create;
   FMaxLogSizeMb := MaxLogSizeMb;
+  FLogpanel := nil;
+  FLogToolPanel := nil;
+  FLogList  := nil;
+  FLock := TThreadList.Create;
   if FActive then
     FLogThread := TLogThread.Create(Filename, FList, MaxLogSizeMb)
   else
@@ -247,10 +284,11 @@ begin
   FList.Free;
   ZipLogs;
   CheckArchivedLogs(FFilename, ArchivePath);
+  FLock.Free;
   inherited;
 end;
 
-procedure TLog.SetActive(const bState: Boolean);
+procedure TLog.SetActive(const bState: boolean; aOwner : TForm = nil);
 begin
   if Factive = bState then
     Exit;
@@ -259,10 +297,17 @@ begin
   begin
     Log('Logger deactivated.');
     StopThread;
+    if Assigned(FLogpanel) then
+    begin
+      FLogPanel.Visible := False;
+    end;
   end;
 
   if not Factive and bState then
   begin
+    if Assigned(aOwner) then
+      AttachLog(aOwner);
+
     Log('Logger activated.');
     FLogThread := TLogThread.Create(FFilename, FList, FMaxLogSizeMb);
   end;
@@ -281,6 +326,57 @@ begin
   result := IncludeTrailingPathDelimiter(IncludeTrailingPathDelimiter(ExtractFilePath(FFilename)) + 'Archives');
   if not DirectoryExists(result) then
     ForceDirectories(result);
+end;
+
+procedure TLog.AttachLog(aOwner: TForm);
+begin
+  if Assigned(FLogpanel) then
+    FLogpanel.Visible := True
+  else
+  begin
+    Log('Logger attaching to : ' + aOwner.Name);
+    FLogpanel := TPanel.Create(aOwner);
+    with FLogpanel do
+    begin
+      name := 'LoggerPnl'+IntToStr(GetTickCount);
+      FLogpanel.Align:=alBottom;
+      FLogpanel.Height:=25;
+    end;
+
+    FLogToolPanel := TPanel.Create(aOwner);
+    with FLogToolPanel do
+    begin
+      name := 'LoggerPnlTool'+IntToStr(GetTickCount);
+      Align:=alTop;
+      Height := 22;
+      Parent := FLogPanel;
+    end;
+    with tButton.Create(aOwner) do
+    begin
+      align := alRight;
+      name := 'LoggerPnlToolBtn'+IntToStr(GetTickCount64);
+      Caption := 'Show';
+      Parent := FLogToolPanel;
+      OnCLick := @DefBtnClick;
+    end;
+
+    FLogList := TListbox.Create(aOwner);
+    with FLogList do
+    begin
+      Name:='LoggerList'+IntToStr(GetTickCount64);
+      Align:=alClient;
+      Parent := FLogpanel;
+    end;
+    FlogPanel.Visible := True;
+    FlogPanel.Parent := aOwner;
+  end;
+end;
+
+procedure TLog.DetachLog;
+begin
+  FlogPanel := nil;
+  FLogList := nil;
+  Log('Logger detached from host window.');
 end;
 
 procedure TLog.StopThread;
@@ -338,6 +434,22 @@ begin
   finally
     z.Free;
   end;
+end;
+
+procedure TLog.DefBtnClick(Sender: Tobject);
+begin
+  if Assigned(FLogPanel) then
+    with FLogPanel do
+      if Height = 200 then
+      begin
+        Height := 25;
+        Tbutton(Sender).Caption := 'Show';
+      end
+      else
+      begin
+        Height := 200;
+        Tbutton(Sender).Caption := 'Hide';
+      end;
 end;
 
 { TLogThread }
