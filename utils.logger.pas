@@ -338,23 +338,25 @@ begin
     FLogpanel := TPanel.Create(aOwner);
     with FLogpanel do
     begin
-      name := 'LoggerPnl'+IntToStr(GetTickCount);
+      name := 'LoggerPnl';
       FLogpanel.Align:=alBottom;
       FLogpanel.Height:=25;
+      Caption := '';
     end;
 
     FLogToolPanel := TPanel.Create(aOwner);
     with FLogToolPanel do
     begin
-      name := 'LoggerPnlTool'+IntToStr(GetTickCount);
+      name := 'LoggerPnlTool';
       Align:=alTop;
       Height := 22;
+      Caption := '';
       Parent := FLogPanel;
     end;
     with tButton.Create(aOwner) do
     begin
       align := alRight;
-      name := 'LoggerPnlToolBtn'+IntToStr(GetTickCount64);
+      name := 'LoggerPnlToolBtn';
       Caption := 'Show';
       Parent := FLogToolPanel;
       OnCLick := @DefBtnClick;
