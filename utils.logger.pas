@@ -22,8 +22,8 @@ type
     procedure Log(const msg : string);
     procedure SetActive(const bState : boolean; aOwner : TForm);
     function ArchivePath:String;
-    procedure AttachLog(aOwner : TForm);
-    procedure DetachLog;
+    //procedure AttachLog(aOwner : TForm);
+    //procedure DetachLog;
   end;
 
 function GetIlog(const Filename : string; Activate : Boolean = True; MaxLogSizeMb : integer = 10):ILog;
@@ -101,8 +101,8 @@ type
     procedure Dump;
     procedure SetActive(const bState : boolean; aOwner : TForm = nil);
     function ArchivePath:String;
-    procedure AttachLog(aOwner : TForm);
-    procedure DetachLog;
+    //procedure AttachLog(aOwner : TForm);
+    //procedure DetachLog;
   End;
 
 
@@ -248,7 +248,7 @@ begin
     try
       try
         if Assigned(FLogList) then
-          FLogList.AddItem(s, nil);
+          FLogList.Items.Add(s);
       except
       end;
     finally
@@ -305,8 +305,8 @@ begin
 
   if not Factive and bState then
   begin
-    if Assigned(aOwner) then
-      AttachLog(aOwner);
+    //if Assigned(aOwner) then
+    //  AttachLog(aOwner);
 
     Log('Logger activated.');
     FLogThread := TLogThread.Create(FFilename, FList, FMaxLogSizeMb);
@@ -328,6 +328,7 @@ begin
     ForceDirectories(result);
 end;
 
+(*
 procedure TLog.AttachLog(aOwner: TForm);
 begin
   if Assigned(FLogpanel) then
@@ -380,6 +381,7 @@ begin
   FLogList := nil;
   Log('Logger detached from host window.');
 end;
+*)
 
 procedure TLog.StopThread;
 begin
