@@ -281,7 +281,7 @@ begin
 
             try
               FCur := z;
-              FMsg := Fstr_scanning +' (' + Files[z] + ')';
+              FMsg := Fstr_scanning +':' + Files[z];
               FFile := Files[z];
               Synchronize(@DoCallBackFalse);
               Synchronize(@DoProgress);

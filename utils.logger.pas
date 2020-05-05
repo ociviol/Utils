@@ -467,6 +467,8 @@ begin
   FOriginalFilename := Filename;
   FFilename := MakeFilename(Filename);
   Flist := List;
+  if not ForceDirectories(ExtractFilePath(FFilename)) then
+    raise Exception.Create('TLogThread.Create: Cannot create path : ' + ExtractFilePath(FFilename));
   inherited Create(False);
   Priority := tpLower;
 end;
