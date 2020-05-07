@@ -16,19 +16,34 @@ type
 
   { TThreadStringList }
 
-  TThreadStringList = Class(TStringList)
-  protected
-    FLock : TThreadList;
-  protected
-    function Get(Index: Integer): string; override;
-    function GetObject(Index: Integer): TObject; override;
-    procedure Put(Index: Integer; const S: string); override;
-    procedure PutObject(Index: Integer; AObject: TObject); override;
-    function GetCount: Integer; override;
+  TThreadStringList = Class(TThreadList)
+  private
+    FStringlist : TStringlist;
+    function Get(Index: Integer): string;
+    function GetCount: Integer;
+    function GetObject(Index: Integer): TObject;
+    function GetOnChanging: TNotifyEvent;
+    function GetSorted: Boolean;
+    procedure Put(Index: Integer; AValue: string);
+    procedure PutObject(Index: Integer; AObject: TObject);
+    procedure SetOnChanging(AValue: TNotifyEvent);
+    procedure SetSorted(AValue: Boolean);
   public
     constructor Create;
     destructor Destroy; override;
     function HasObject(aObject: TObject): Boolean;
+    procedure Clear;
+    function  LockList: TStringList;  reintroduce;
+    procedure Delete(index : integer); overload;
+    procedure UnlockList;  reintroduce;
+    procedure AddObject(const AVAlue : STring; AObject : TObject);
+    function IndexOf(const AValue : String):Integer;
+
+    property Count : Integer read GetCount;
+    property Objects[Index: Integer]: TObject read GetObject write PutObject;
+    property Strings[Index: Integer]: string read Get write Put; default;
+    property Sorted : Boolean read GetSorted write SetSorted;
+    property OnChanging : TNotifyEvent read GetOnChanging Write SetOnChanging;
   end;
 
 
@@ -40,76 +55,172 @@ implementation
 
 { TThreadStringList }
 
-function TThreadStringList.Get(Index: Integer): string;
-begin
-  Flock.LockList;
-  try
-    Result:=inherited Get(Index);
-  finally
-    FLock.UnlockList;
-  end;
-end;
-
-function TThreadStringList.GetObject(Index: Integer): TObject;
-begin
-  Flock.LockList;
-  try
-    Result:=inherited GetObject(Index);
-  finally
-    FLock.UnlockList;
-  end;
-end;
-
-procedure TThreadStringList.Put(Index: Integer; const S: string);
-begin
-  Flock.LockList;
-  try
-    inherited Put(Index, S);
-  finally
-    FLock.UnlockList;
-  end;
-end;
-
-procedure TThreadStringList.PutObject(Index: Integer; AObject: TObject);
-begin
-  Flock.LockList;
-  try
-    inherited PutObject(Index, AObject);
-  finally
-    FLock.UnlockList;
-  end;
-end;
-
-function TThreadStringList.GetCount: Integer;
-begin
-  Flock.LockList;
-  try
-    Result:=inherited GetCount;
-  finally
-    FLock.UnlockList;
-  end;
-end;
-
 constructor TThreadStringList.Create;
 begin
-  Flock := TThreadList.Create;
+  FStringlist := TStringlist.Create;
   inherited Create;
 end;
 
 destructor TThreadStringList.Destroy;
 begin
-  flock.Free;
+  FStringlist.Free;
   inherited Destroy;
+end;
+
+function TThreadStringList.GetObject(Index: Integer): TObject;
+begin
+  with LockList do
+  try
+    result := FStringlist.Objects[index];
+  finally
+    UnlockList;
+  end;
+end;
+
+procedure TThreadStringList.PutObject(Index: Integer; AObject: TObject);
+begin
+  with LockList do
+  try
+    FStringlist.Objects[index] := AObject;
+  finally
+    UnlockList;
+  end;
+end;
+
+procedure TThreadStringList.SetSorted(AValue: Boolean);
+begin
+  with LockList do
+  try
+    FStringlist.Sorted := AVAlue;
+  finally
+    UnlockList;
+  end;
+end;
+
+procedure TThreadStringList.Put(Index: Integer; AValue: string);
+begin
+  with LockList do
+  try
+    FStringlist[index] := aValue;
+  finally
+    UnlockList;
+  end;
+end;
+
+procedure TThreadStringList.SetOnChanging(AValue: TNotifyEvent);
+begin
+  with LockList do
+  try
+    FStringlist.OnChanging := AValue;
+  finally
+    UnlockList;
+  end;
+end;
+
+function TThreadStringList.GetSorted: Boolean;
+begin
+  with LockList do
+  try
+    result := FStringlist.Sorted;
+  finally
+    UnlockList;
+  end;
+end;
+
+function TThreadStringList.GetCount: Integer;
+begin
+ with LockList do
+  try
+    result := FStringlist.Count;
+  finally
+    UnlockList;
+  end;
+end;
+
+function TThreadStringList.Get(Index: Integer): string;
+begin
+  with LockList do
+  try
+    result := FStringlist[Index];
+  finally
+    UnlockList;
+  end;
+end;
+
+function TThreadStringList.GetOnChanging: TNotifyEvent;
+begin
+  with LockList do
+  try
+    result := FStringlist.OnChanging;
+  finally
+    UnlockList;
+  end;
 end;
 
 function TThreadStringList.HasObject(aObject: TObject): Boolean;
 var
   i : integer;
 begin
-  for i := 0 to Count - 1 do
-    if Objects[i] = aObject then
-      exit(result);
-  result := false;
+  with LockList do
+  try
+    for i := 0 to FStringlist.Count - 1 do
+      if FStringlist.Objects[i] = aObject then
+        exit(result);
+    result := false;
+  finally
+    UnlockList;
+  end;
+end;
+
+procedure TThreadStringList.Clear;
+begin
+  with LockList do
+  try
+    FStringlist.Clear;
+  finally
+    UnlockList;
+  end;
+end;
+
+function TThreadStringList.LockList: TStringList;
+begin
+  inherited LockList;
+  result := FStringlist;
+end;
+
+procedure TThreadStringList.Delete(index: integer);
+begin
+  with LockList do
+  try
+    FStringlist.Delete(index);
+  finally
+    UnlockList;
+  end;
+end;
+
+procedure TThreadStringList.UnlockList;
+begin
+  inherited UnlockList;
+end;
+
+procedure TThreadStringList.AddObject(const AVAlue : STring; AObject : TObject);
+begin
+  with LockList do
+  try
+    FStringlist.AddObject(AValue, AObject);
+  finally
+    UnlockList;
+  end;
+end;
+
+function TThreadStringList.IndexOf(const AValue: String): Integer;
+begin
+  with LockList do
+  try
+    result := FStringlist.IndexOf(AValue);
+  finally
+    UnlockList;
+  end;
 end;
 
 

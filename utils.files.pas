@@ -10,10 +10,10 @@ unit Utils.Files;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, utils.Logger;
 
 function GetFileSize(const FileName : string) : Int64;
-procedure CopyFile(const aSrc, aDest : String);
+procedure CopyFile(const aSrc, aDest : String; FLog : ILog = nil);
 
 implementation
 
@@ -30,7 +30,7 @@ begin
     result := 0;
 end;
 
-procedure CopyFile(const aSrc, aDest: String);
+procedure CopyFile(const aSrc, aDest: String; FLog : ILog = nil);
 var
   sin, sout : TFileStream;
   procedure SafeOpenSourceFile;
@@ -46,8 +46,13 @@ var
         sin := TFileStream.Create(aSrc, fmOpenRead);
         done := true;
       except
-        inc(retry);
-        sleep(250);
+        on e: exception do
+        begin
+          if Assigned(Flog) then
+            FLog.Log('CopyFile:Error:'+e.Message);
+          inc(retry);
+          sleep(50);
+        end;
       end;
     until (retry >=20) or done;
   end;
@@ -57,6 +62,8 @@ begin
    if not Assigned(sin) then
      raise Exception.Create('Utils.Files.CopyFile : Cannot open source file : ' + aSrc);
   try
+    if not DirectoryExists(ExtractFilePath(aDest)) then
+      ForceDirectories(ExtractFilePath(aDest));
     sout := TFileStream.Create(aDest, fmCreate);
     try
        sout.CopyFrom(sin, sin.Size);
