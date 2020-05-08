@@ -10,70 +10,95 @@ unit Utils.Files;
 interface
 
 uses
-  Classes, SysUtils, utils.Logger;
+  Classes, SysUtils, utils.Logger, utils.Searchfiles;
 
-function GetFileSize(const FileName : string) : Int64;
-procedure CopyFile(const aSrc, aDest : String; FLog : ILog = nil);
+function GetFileSize(const FileName: string): int64;
+procedure CopyFile(const aSrc, aDest: string; FLog: ILog = nil);
+procedure KillFolder(const aFolder: string);
 
 implementation
 
-function GetFileSize(const FileName : string) : Int64;
+function GetFileSize(const FileName: string): int64;
 var
-  sr : TRawByteSearchRec;
+  sr: TRawByteSearchRec;
 begin
-  if FindFirst (Filename, faAnyFile, sr) = 0 then
+  if FindFirst(Filename, faAnyFile, sr) = 0 then
   begin
     FindClose(sr);
-    result := sr.Size;
+    Result := sr.Size;
   end
   else
-    result := 0;
+    Result := 0;
 end;
 
-procedure CopyFile(const aSrc, aDest: String; FLog : ILog = nil);
+procedure CopyFile(const aSrc, aDest: string; FLog: ILog = nil);
 var
-  sin, sout : TFileStream;
+  sin, sout: TFileStream;
+
   procedure SafeOpenSourceFile;
   var
-    retry : integer;
-    done : boolean;
+    retry: integer;
+    done: boolean;
   begin
-    done := false;
+    done := False;
     retry := 0;
     sin := nil;
     repeat
       try
         sin := TFileStream.Create(aSrc, fmOpenRead);
-        done := true;
+        done := True;
       except
-        on e: exception do
+        on e: Exception do
         begin
           if Assigned(Flog) then
-            FLog.Log('CopyFile:Error:'+e.Message);
-          inc(retry);
+            FLog.Log('CopyFile:Error:' + e.Message);
+          Inc(retry);
           sleep(50);
         end;
       end;
-    until (retry >=20) or done;
+    until (retry >= 20) or done;
   end;
 
 begin
   SafeOpenSourceFile;
-   if not Assigned(sin) then
-     raise Exception.Create('Utils.Files.CopyFile : Cannot open source file : ' + aSrc);
+  if not Assigned(sin) then
+    raise Exception.Create('Utils.Files.CopyFile : Cannot open source file : ' + aSrc);
   try
     if not DirectoryExists(ExtractFilePath(aDest)) then
       ForceDirectories(ExtractFilePath(aDest));
     sout := TFileStream.Create(aDest, fmCreate);
     try
-       sout.CopyFrom(sin, sin.Size);
+      sout.CopyFrom(sin, sin.Size);
     finally
-      sout.free;
+      sout.Free;
     end;
   finally
     sin.Free;
   end;
 end;
 
-end.
+procedure KillFolder(const aFolder: string);
+var
+  files: TStringList;
+  s : string;
+  i : integer;
+begin
+  try
+    Files := TStringList.Create;
+    try
+      GetFiles(aFolder, ['*'], Files);
+      for s in files do
+        DeleteFile(s);
+      Files.Clear;
+      GetDirectories(aFolder, Files);
+      for i := Files.Count - 1 downto 0 do
+        RemoveDir(Files[i]);
+    finally
+      Files.Free;
+    end;
 
+  except
+  end;
+end;
+
+end.
