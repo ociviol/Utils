@@ -37,7 +37,8 @@ type
   end;
 
 
-function ThreadedSearchFiles(const Path, Masks : String;
+function ThreadedSearchFiles(const Path : String;
+                             const Masks : array of String;
                              CallBack : TFoundFileCallback;
                              Terminate : TNotifyEvent;
                              OnProgress : TProgressEvent = nil;
@@ -55,8 +56,8 @@ uses
 type
   TThreadSearchFiles = Class(TCancellableThread)
   private
-    FPath,
-    FMasks,
+    FPath : String;
+    FMasks : array of string;
     Fstr_scanning : String;
     FCallBack : TFoundFileCallback;
     FOnProgress : TProgressEvent;
@@ -69,7 +70,8 @@ type
     procedure DoCallBackTrue;
     procedure DoCallBackFalse;
   public
-    constructor Create(const Path, Masks : String;
+    constructor Create(const Path : String;
+                       const Masks : array of string;
                        CallBack : TFoundFileCallback;
                        WhenTerminate : TNotifyEvent;
                        OnProgress : TProgressEvent = nil;
@@ -156,7 +158,8 @@ begin
   end;
 end;
 
-function ThreadedSearchFiles(const Path, Masks : String;
+function ThreadedSearchFiles(const Path : String;
+                             const Masks : array of String;
                              CallBack : TFoundFileCallback;
                              Terminate : TNotifyEvent;
                              OnProgress : TProgressEvent = nil;
@@ -168,15 +171,20 @@ end;
 
 { TThreadSearchFiles }
 
-constructor TThreadSearchFiles.Create(const Path, Masks : String;
+constructor TThreadSearchFiles.Create(const Path : String;
+                                      const Masks : array of string;
                                       CallBack : TFoundFileCallback;
                                       WhenTerminate : TNotifyEvent;
                                       OnProgress : TProgressEvent = nil;
                                       const str_scanning : string = '';
                                       SearchFileOptions : TSearchFileOptions = [sfoRecurse]);
+var
+  i : integer;
 begin
   FPath := Path;
-  FMasks := Masks;
+  SetLength(FMasks, Length(Masks));
+  for i := low(MAsks) to High(Masks) do
+    FMAsks[i] := Masks[i];
   FOnProgress := OnProgress;
   FCallBack := CallBack;
   OnTerminate := WhenTerminate;
