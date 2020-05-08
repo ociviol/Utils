@@ -10,7 +10,7 @@ unit Utils.Strings;
 interface
 
 uses
-  Classes, SysUtils;
+  Classes, SysUtils, Utils.NaturalSortStringList;
 
 type
 
@@ -18,7 +18,7 @@ type
 
   TThreadStringList = Class(TThreadList)
   private
-    FStringlist : TStringlist;
+    FStringlist : TNaturalSortStringList;
     function Get(Index: Integer): string;
     function GetCount: Integer;
     function GetObject(Index: Integer): TObject;
@@ -38,6 +38,7 @@ type
     procedure UnlockList;  reintroduce;
     procedure AddObject(const AVAlue : STring; AObject : TObject);
     function IndexOf(const AValue : String):Integer;
+    procedure Sort;
 
     property Count : Integer read GetCount;
     property Objects[Index: Integer]: TObject read GetObject write PutObject;
@@ -57,7 +58,7 @@ implementation
 
 constructor TThreadStringList.Create;
 begin
-  FStringlist := TStringlist.Create;
+  FStringlist := TNaturalSortStringList.Create;
   inherited Create;
 end;
 
@@ -218,6 +219,16 @@ begin
   with LockList do
   try
     result := FStringlist.IndexOf(AValue);
+  finally
+    UnlockList;
+  end;
+end;
+
+procedure TThreadStringList.Sort;
+begin
+  with LockList do
+  try
+    FStringlist.Sort;
   finally
     UnlockList;
   end;
