@@ -45,7 +45,6 @@ function ThreadedSearchFiles(const Path, Masks : String;
                              SearchFileOptions : TSearchFileOptions = [sfoRecurse]):TThread;
 
 procedure GetDirectories(const Path : String; var Dirs : TStringArray);
-procedure GetFiles(const Path, sMasks : String; Files : TStringList);
 procedure GetFiles(const Path : string; Masks : Array of String; Files : TStringList);
 
 implementation
@@ -78,6 +77,60 @@ type
                        SearchFileOptions : TSearchFileOptions = [sfoRecurse]);
     procedure Execute; override;
   End;
+
+
+procedure GetDirectories(const Path : String; var Dirs : TStringArray);
+var
+  sr : TRawByteSearchRec;
+  sPath : String;
+begin
+  sPath := IncludeTrailingPathDelimiter(Path) + '*';
+  if FindFirst (sPath, faDirectory, sr) = 0 then
+  try
+    repeat
+      if (sr.Attr and faDirectory) = faDirectory then
+        if (sr.Name <> '.') and (sr.Name <> '..') then
+        begin
+          GetDirectories(IncludeTrailingPathDelimiter(Path) + sr.Name, Dirs);
+          SetLength(Dirs, length(Dirs)+1);
+          Dirs[length(Dirs)-1] := IncludeTrailingPathDelimiter(Path) + sr.Name;
+        end;
+    until FindNext(sr) <> 0;
+  finally
+    FindClose(sr);
+  end
+end;
+
+procedure GetFiles(const Path : string; Masks : Array of String; Files : TStringList);
+var
+  sr : TRawByteSearchRec;
+  spath : string;
+  s : string;
+begin
+  sPath := IncludeTrailingPathDelimiter(Path) + '*';
+  if FindFirst (sPath, faAnyFile, sr) = 0 then
+  try
+    repeat
+      if (sr.Attr and faDirectory) = faDirectory then
+      begin
+         if (sr.Name <> '.') and (sr.Name <> '..') then
+            GetFiles(IncludeTrailingPathDelimiter(Path) + sr.Name, Masks, Files);
+      end
+      else
+        for s in Masks do
+        begin
+          if MatchesMask(sr.Name, s) then
+          begin
+            Files.Add(IncludeTrailingPathDelimiter(Path) + sr.Name);
+            break;
+          end;
+        end;
+
+    until FindNext(sr) <> 0;
+  finally
+    FindClose(sr);
+  end
+end;
 
 { TCancellableThread }
 
@@ -133,77 +186,6 @@ begin
   inherited Create(False);
 end;
 
-procedure GetDirectories(const Path : String; var Dirs : TStringArray);
-var
-  sr : TRawByteSearchRec;
-  sPath : String;
-begin
-  sPath := IncludeTrailingPathDelimiter(Path) + '*';
-  if FindFirst (sPath, faDirectory, sr) = 0 then
-  try
-    repeat
-      if (sr.Attr and faDirectory) = faDirectory then
-        if (sr.Name <> '.') and (sr.Name <> '..') then
-        begin
-          GetDirectories(IncludeTrailingPathDelimiter(Path) + sr.Name, Dirs);
-          SetLength(Dirs, length(Dirs)+1);
-          Dirs[length(Dirs)-1] := IncludeTrailingPathDelimiter(Path) + sr.Name;
-        end;
-    until FindNext(sr) <> 0;
-  finally
-    FindClose(sr);
-  end
-end;
-
-procedure GetFiles(const Path, sMasks : String; Files : TStringList);
-var
-  Masks : TStringArray;
-  t : TNaturalSortStringList;
-begin
-  Masks := sMasks.Split([';']);
-  GetFiles(Path, Masks, Files);
-
-  t := TNaturalSortStringList.Create;
-  with t do
-  try
-    Assign(Files);
-    Sort;
-    Files.Assign(t);
-  finally
-    Free;
-  end;
-end;
-
-procedure GetFiles(const Path : string; Masks : Array of String; Files : TStringList);
-var
-  sr : TRawByteSearchRec;
-  spath : string;
-  s : string;
-begin
-  sPath := IncludeTrailingPathDelimiter(Path) + '*';
-  if FindFirst (sPath, faAnyFile, sr) = 0 then
-  try
-    repeat
-      if (sr.Attr and faDirectory) = faDirectory then
-      begin
-         if (sr.Name <> '.') and (sr.Name <> '..') then
-            GetFiles(IncludeTrailingPathDelimiter(Path) + sr.Name, Masks, Files);
-      end
-      else
-        for s in Masks do
-        begin
-          if MatchesMask(sr.Name, s) then
-          begin
-            Files.Add(IncludeTrailingPathDelimiter(Path) + sr.Name);
-            break;
-          end;
-        end;
-
-    until FindNext(sr) <> 0;
-  finally
-    FindClose(sr);
-  end
-end;
 
 procedure TThreadSearchFiles.DoProgress;
 begin
@@ -222,10 +204,78 @@ begin
 end;
 
 procedure TThreadSearchFiles.Execute;
-var
-  files : TSTringList;
-  dirs : TStringArray;
-  z : integer;
+
+  procedure _GetDirectories(const Path : string);
+  var
+    sr : TRawByteSearchRec;
+    sPath : String;
+  begin
+    sPath := IncludeTrailingPathDelimiter(Path) + '*';
+    if FindFirst (sPath, faDirectory, sr) = 0 then
+    try
+      repeat
+        if (sr.Attr and faDirectory) = faDirectory then
+          if (sr.Name <> '.') and (sr.Name <> '..') then
+          begin
+            _GetDirectories(IncludeTrailingPathDelimiter(Path) + sr.Name);
+
+            if Fcanceled then Terminate;
+            if Terminated then
+              Exit;
+
+            FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(Path) + sr.Name;
+            FFile := IncludeTrailingPathDelimiter(Path) + sr.Name;
+            Synchronize(@DoCallBackTrue);
+            Synchronize(@DoProgress);
+            Sleep(10);
+          end;
+      until FindNext(sr) <> 0;
+    finally
+      FindClose(sr);
+    end
+  end;
+
+  procedure _GetFiles(const Path : string);
+  var
+    sr : TRawByteSearchRec;
+    spath : string;
+    s : string;
+  begin
+    sPath := IncludeTrailingPathDelimiter(Path) + '*';
+    if FindFirst (sPath, faAnyFile, sr) = 0 then
+    try
+      repeat
+        if (sr.Attr and faDirectory) = faDirectory then
+        begin
+           if (sr.Name <> '.') and (sr.Name <> '..') then
+              _GetFiles(IncludeTrailingPathDelimiter(Path) + sr.Name);
+        end
+        else
+          for s in FMasks do
+          begin
+            if MatchesMask(sr.Name, s) then
+            begin
+              if Fcanceled then Terminate;
+              if Terminated then
+                Exit;
+
+              try
+                FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(FPath) + sr.Name;
+                FFile := IncludeTrailingPathDelimiter(FPath) + sr.Name;
+                Synchronize(@DoCallBackFalse);
+                Synchronize(@DoProgress);
+                Sleep(10);
+              except
+              end;
+              break;
+            end;
+          end;
+
+      until FindNext(sr) <> 0;
+    finally
+      FindClose(sr);
+    end
+  end;
 begin
   while not Terminated do
   try
@@ -234,65 +284,20 @@ begin
 
       FCur := 0;
       FMax := 1;
-      FMsg := Fstr_scanning;
+      FMsg := Fstr_scanning + '...';
+
       if Assigned(FOnProgress) then
         Synchronize(@DoProgress);
 
       if sfoFolders in FOptions then
-      begin
-        SetLength(Dirs, 0);
-        try
-          GetDirectories(FPath, Dirs);
-          for z := Low(Dirs) to High(Dirs) do
-          begin
-            if Fcanceled then Terminate;
-            if Terminated then
-              Exit;
-
-            try
-              FMsg := Fstr_scanning + FPath;
-              FFile := Dirs[z];
-              Synchronize(@DoCallBackTrue);
-              Synchronize(@DoProgress);
-              Sleep(10);
-            except
-            end;
-          end;
-        finally
-          SetLength(dirs, 0);
-        end;
-      end;
+        _GetDirectories(FPath);
 
       if Terminated then
         Exit;
 
       if not (sfoNoFiles in FOptions) then
-      begin
-        Files := TSTringList.Create;
-        try
-          GetFiles(FPath, FMasks, Files);
-          FMax := Files.Count-1;
+        _GetFiles(FPath);
 
-          for z := 0 to files.Count - 1 do
-          begin
-            if Fcanceled then Terminate;
-            if Terminated then
-              Exit;
-
-            try
-              FCur := z;
-              FMsg := Fstr_scanning + Files[z];
-              FFile := Files[z];
-              Synchronize(@DoCallBackFalse);
-              Synchronize(@DoProgress);
-              Sleep(10);
-            except
-            end;
-          end;
-        finally
-          Files.Free;
-        end;
-      end;
     finally
       FCur := 0;
       FMax := 0;

@@ -412,7 +412,7 @@ begin
 
     files := TStringlist.Create;
     try
-      GetFiles(ExtractFilePath(FFilename), '*.log', Files);
+      GetFiles(ExtractFilePath(FFilename), ['*.log'], Files);
       if files.Count > 0 then
       try
         Active := True;
