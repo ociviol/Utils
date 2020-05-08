@@ -45,7 +45,7 @@ function ThreadedSearchFiles(const Path : String;
                              const str_scanning : string = '';
                              SearchFileOptions : TSearchFileOptions = [sfoRecurse]):TThread;
 
-procedure GetDirectories(const Path : String; var Dirs : TStringArray);
+procedure GetDirectories(const Path : String; var Dirs : TStringList);
 procedure GetFiles(const Path : string; Masks : Array of String; Files : TStringList);
 
 implementation
@@ -80,6 +80,26 @@ type
     procedure Execute; override;
   End;
 
+procedure GetDirectories(const Path : String; var Dirs : TStringList);
+var
+  sr : TRawByteSearchRec;
+  sPath : String;
+begin
+  sPath := IncludeTrailingPathDelimiter(Path) + '*';
+  if FindFirst (sPath, faDirectory, sr) = 0 then
+  try
+    repeat
+      if (sr.Attr and faDirectory) = faDirectory then
+        if (sr.Name <> '.') and (sr.Name <> '..') then
+        begin
+          GetDirectories(IncludeTrailingPathDelimiter(Path) + sr.Name, Dirs);
+          Dirs.Add(IncludeTrailingPathDelimiter(Path) + sr.Name);
+        end;
+    until FindNext(sr) <> 0;
+  finally
+    FindClose(sr);
+  end;
+end;
 
 procedure GetDirectories(const Path : String; var Dirs : TStringArray);
 var
