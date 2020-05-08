@@ -268,8 +268,8 @@ procedure TThreadSearchFiles.Execute;
                 Exit;
 
               try
-                FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(FPath) + sr.Name;
-                FFile := IncludeTrailingPathDelimiter(FPath) + sr.Name;
+                FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(Path) + sr.Name;
+                FFile := IncludeTrailingPathDelimiter(Path) + sr.Name;
                 Synchronize(@DoCallBackFalse);
                 Synchronize(@DoProgress);
                 Sleep(10);
