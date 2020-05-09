@@ -19,9 +19,10 @@ type
     procedure Sort; override;
   End;
 
-function NaturalCompare(const Item1, Item2 : String): Integer;
-
 implementation
+
+uses
+  strUtils;
 
 var
   CodePage: integer;
@@ -201,7 +202,8 @@ end;
 
 function NaturalSortCompare(aList: TStringList;  Index1, Index2: Integer): Integer;
 begin
-  result := NaturalCompare(aList[Index1], aList[Index2]);
+  result := NaturalCompareText(aList[Index1], aList[Index2]);
+  //result := NaturalCompare(aList[Index1], aList[Index2]);
 end;
 
 { TNaturalSortStringList }

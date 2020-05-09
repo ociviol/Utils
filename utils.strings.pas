@@ -50,8 +50,6 @@ type
 
 //Functions
 
-function AnsiNaturalCompareStrings(const str1, str2: string): integer; inline;
-
 implementation
 
 { TThreadStringList }
@@ -232,11 +230,6 @@ begin
   finally
     UnlockList;
   end;
-end;
-
-function AnsiNaturalCompareStrings(const str1, str2: string): integer;
-begin
-  result := NaturalCompare(str1, str2);
 end;
 
 {
