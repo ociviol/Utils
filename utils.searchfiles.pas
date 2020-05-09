@@ -51,7 +51,7 @@ procedure GetFiles(const Path : string; Masks : Array of String; Files : TString
 implementation
 
 uses
-  Utils.Masks, Utils.NaturalSortStringList;
+  Utils.Masks, Utils.NaturalSortStringList, LazUTF8;
 
 type
   TThreadSearchFiles = Class(TCancellableThread)
@@ -95,7 +95,7 @@ begin
         if (sr.Name <> '.') and (sr.Name <> '..') then
         begin
           GetDirectories(IncludeTrailingPathDelimiter(Path) + sr.Name, Dirs);
-          Dirs.Add(IncludeTrailingPathDelimiter(Path) + sr.Name);
+          Dirs.Add(SysToUTF8(IncludeTrailingPathDelimiter(Path) + sr.Name));
         end;
     until FindNext(sr) <> 0;
   finally
@@ -117,7 +117,7 @@ begin
         begin
           GetDirectories(IncludeTrailingPathDelimiter(Path) + sr.Name, Dirs);
           SetLength(Dirs, length(Dirs)+1);
-          Dirs[length(Dirs)-1] := IncludeTrailingPathDelimiter(Path) + sr.Name;
+          Dirs[length(Dirs)-1] := SysToUTF8(IncludeTrailingPathDelimiter(Path) + sr.Name);
         end;
     until FindNext(sr) <> 0;
   finally
@@ -145,7 +145,7 @@ begin
         begin
           if MatchesMask(sr.Name, s) then
           begin
-            Files.Add(IncludeTrailingPathDelimiter(Path) + sr.Name);
+            Files.Add(SysToUTF8(IncludeTrailingPathDelimiter(Path) + sr.Name));
             break;
           end;
         end;
@@ -251,8 +251,8 @@ begin
           if Terminated then
             Exit;
 
-          FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(Path) + sr.Name;
-          FFile := IncludeTrailingPathDelimiter(Path) + sr.Name;
+          FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(Path) + SysToUTF8(sr.Name);
+          FFile := SysToUTF8(IncludeTrailingPathDelimiter(Path) + sr.Name);
           Synchronize(@DoCallBackTrue);
           Synchronize(@DoProgress);
           Sleep(10);
@@ -289,7 +289,7 @@ begin
 
             try
               FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(Path) + sr.Name;
-              FFile := IncludeTrailingPathDelimiter(Path) + sr.Name;
+              FFile := SysToUTF8(IncludeTrailingPathDelimiter(Path) + sr.Name);
               Synchronize(@DoCallBackFalse);
               Synchronize(@DoProgress);
               Sleep(10);
