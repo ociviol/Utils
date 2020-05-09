@@ -68,7 +68,7 @@ var
 const
   blksz = (1024 * 1024) * 2;
 var
-  sz : int64;
+  sz, cp : int64;
 begin
   SafeOpenSourceFile;
   if not Assigned(sin) then
@@ -78,11 +78,13 @@ begin
       ForceDirectories(ExtractFilePath(aDest));
 
     sz := sin.size;
+    cp := blksz;
     sout := TFileStream.Create(aDest, fmCreate);
     try
       while(sz > 0) do
       begin
-        dec(sz, sout.CopyFrom(sin, ifthen(sz > blksz, blksz, sz)));
+        cp := sout.CopyFrom(sin, ifthen(sz < blksz, sz, blksz));
+        dec(sz, cp);
         if Assigned(aProgress) then
           aProgress(sin.size - sz, sin.size, 'Copying : ' + ExtractFileName(aSrc));
       end;
