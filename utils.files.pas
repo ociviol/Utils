@@ -12,11 +12,17 @@ interface
 uses
   Classes, SysUtils, utils.Logger, utils.Searchfiles;
 
+type
+  TCopyProgress = procedure(aCur, aMax : int64; const aMsg : String) of object;
+
 function GetFileSize(const FileName: string): int64;
-procedure CopyFile(const aSrc, aDest: string; FLog: ILog = nil);
+procedure CopyFile(const aSrc, aDest: string; FLog: ILog = nil; aProgress : TCopyProgress = nil);
 procedure KillFolder(const aFolder: string);
 
 implementation
+
+uses
+  math;
 
 function GetFileSize(const FileName: string): int64;
 var
@@ -31,7 +37,7 @@ begin
     Result := 0;
 end;
 
-procedure CopyFile(const aSrc, aDest: string; FLog: ILog = nil);
+procedure CopyFile(const aSrc, aDest: string; FLog: ILog = nil; aProgress : TCopyProgress = nil);
 var
   sin, sout: TFileStream;
 
@@ -59,6 +65,10 @@ var
     until (retry >= 20) or done;
   end;
 
+const
+  blksz = (1024 * 1024) * 2;
+var
+  sz : int64;
 begin
   SafeOpenSourceFile;
   if not Assigned(sin) then
@@ -66,9 +76,16 @@ begin
   try
     if not DirectoryExists(ExtractFilePath(aDest)) then
       ForceDirectories(ExtractFilePath(aDest));
+
+    sz := sin.size;
     sout := TFileStream.Create(aDest, fmCreate);
     try
-      sout.CopyFrom(sin, sin.Size);
+      while(sz > 0) do
+      begin
+        dec(sz, sout.CopyFrom(sin, ifthen(sz > blksz, blksz, sz)));
+        if Assigned(aProgress) then
+          aProgress(sin.size - sz, sin.size, 'Copying : ' + ExtractFileName(aSrc));
+      end;
     finally
       sout.Free;
     end;

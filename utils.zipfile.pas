@@ -193,7 +193,7 @@ type
     destructor Destroy; override;
 
     procedure Activate;
-
+    procedure SaveToFile(const aFilename : String);
     //file functions
     function GetFileStream(Index : Integer): TMemoryStream;
     function GetFileStream(const AFileName: string): TMemoryStream;
@@ -266,6 +266,37 @@ end;
 procedure TZipFile.Activate;
 begin
   Active := True;
+end;
+
+procedure TZipFile.SaveToFile(const aFilename : String);
+var
+  z : TZipFile;
+  i : integer;
+  ms : TMemoryStream;
+begin
+  if FileExists(aFilename) then
+    DeleteFile(aFileName);
+
+  z := TZipFile.Create;
+  try
+    z.FileName:=aFilename;
+    z.Activate;
+    z.Comment:=Comment;
+
+    for i:=0 to FileCount - 1 do
+    begin
+      ms := GetFileStream(i);
+      try
+        ms.position := 0;
+        z.AppendStream(ms, FileNames[i], now, clNone);
+      finally
+        ms.free;
+      end;
+    end;
+    z.Active := false;
+  finally
+    z.free;
+  end;
 end;
 
 procedure TZipFile.SetActive(Value: boolean);
