@@ -14,8 +14,9 @@ type
   TTreeNodeEx = Class Helper for TTreeNode
   private
     function GetPath: String;
-  protected
+  public
     property Path: String read GetPath;
+    function RelativePath(const RootPath : String):String;
   End;
 
   { TTreeviewEx }
@@ -65,6 +66,12 @@ begin
       Result := n.Text + PathDelim + Result;
     n := n.Parent;
   end;
+end;
+
+function TTreeNodeEx.RelativePath(const RootPath: String): String;
+begin
+  result := PAth;
+  result := ExcludeLeadingPathDelimiter(Result.Replace(RootPath, ''));
 end;
 
 

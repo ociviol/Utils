@@ -50,7 +50,7 @@ type
 
 //Functions
 
-function AnsiNaturalCompareStrings(str1, str2: string; vCaseSensitive: boolean = True): integer;
+function AnsiNaturalCompareStrings(const str1, str2: string): integer; inline;
 
 implementation
 
@@ -234,7 +234,12 @@ begin
   end;
 end;
 
+function AnsiNaturalCompareStrings(const str1, str2: string): integer;
+begin
+  result := NaturalCompare(str1, str2);
+end;
 
+{
 function AnsiNaturalCompareStrings(str1, str2: string; vCaseSensitive: boolean = True): integer;
 var
   l1, l2: integer; //Str length
@@ -296,6 +301,6 @@ begin
   end;
   Result := (i1 - l1) - (i2 - l2);
 end;
-
+}
 end.
 

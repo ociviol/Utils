@@ -19,6 +19,8 @@ type
     procedure Sort; override;
   End;
 
+function NaturalCompare(const Item1, Item2 : String): Integer;
+
 implementation
 
 var
@@ -151,15 +153,16 @@ begin
   if (Result = 0) then Result := Sign(ord(vChr1^) - Ord(vChr2^));
 end;
 
-function NaturalSortCompare(aList: TStringList;  Index1, Index2: Integer): Integer;
+
+function NaturalCompare(const Item1, Item2 : String): Integer;
 var
-  Str1, Str2 :string;
+ Str1, Str2 :string;
 {$IFDEF LINUX}
-  lang :string;
+lang :string;
 {$endif}
 begin
-  Str1 := RemoveDiacritics(aList[Index1]);
-  Str2 := RemoveDiacritics(aList[Index2]);
+  Str1 := RemoveDiacritics(Item1);
+  Str2 := RemoveDiacritics(Item2);
 
   // Case insensitive.
   {$IFDEF MsWindows}
@@ -170,10 +173,10 @@ begin
     // signed ones (with diacritics) when they are equal.
     // The order among signed ones is preserved.
     if Str1 = Str2 then
-      Result := EvsCompareNatural_A(aList[Index1], aList[Index2], False);
+      Result := EvsCompareNatural_A(Str1, Str2, False);
   end
   else
-    Result := EvsCompareNatural_A(aList[Index1], aList[Index2], False);
+    Result := EvsCompareNatural_A(Str1, Str2, False);
   {$ELSE}
   {$IFDEF LINUX}
   if CodePageString <> '' then
@@ -185,15 +188,20 @@ begin
     begin
       Result := EvsCompareNatural_A(Str1, Str2, False);
       if Str1 = Str2 then
-        Result := EvsCompareNatural_A(aList[Index1], aList[Index2], False);
+        Result := EvsCompareNatural_A(Str1, Str2, False);
     end
     else
-      Result := EvsCompareNatural_A(aList[Index1], aList[Index2], False)
+      Result := EvsCompareNatural_A(Str1, Str2, False)
   end;
   {$ELSE}
-  Result := EvsCompareNatural_A(aList[Index1], aList[Index2], False)
+  Result := EvsCompareNatural_A(Str1, Str2, False)
   {$ENDIF}
   {$ENDIF}
+end;
+
+function NaturalSortCompare(aList: TStringList;  Index1, Index2: Integer): Integer;
+begin
+  result := NaturalCompare(aList[Index1], aList[Index2]);
 end;
 
 { TNaturalSortStringList }
