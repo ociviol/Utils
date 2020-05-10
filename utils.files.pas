@@ -18,6 +18,7 @@ type
 function GetFileSize(const FileName: string): int64;
 procedure CopyFile(const aSrc, aDest: string; FLog: ILog = nil; aProgress : TCopyProgress = nil);
 procedure KillFolder(const aFolder: string);
+function FileCount(const aFolder: string):Integer;
 
 implementation
 
@@ -117,6 +118,22 @@ begin
     end;
 
   except
+  end;
+end;
+
+function FileCount(const aFolder: string): Integer;
+var
+  files: TStringList;
+begin
+  if DirectoryExists(aFolder) then
+  begin
+    Files := TStringList.Create;
+    try
+      GetFiles(aFolder, ['*'], Files);
+      result := Files.Count;
+    finally
+      Files.Free;
+    end;
   end;
 end;
 
