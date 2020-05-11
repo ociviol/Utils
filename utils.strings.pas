@@ -70,7 +70,10 @@ function TThreadStringList.GetObject(Index: Integer): TObject;
 begin
   with LockList do
   try
-    result := FStringlist.Objects[index];
+    if index < FStringlist.Count then
+      result := FStringlist.Objects[index]
+    else
+    result := nil;
   finally
     UnlockList;
   end;
@@ -140,7 +143,10 @@ function TThreadStringList.Get(Index: Integer): string;
 begin
   with LockList do
   try
-    result := FStringlist[Index];
+    if index < FStringlist.Count then
+      result := FStringlist[Index]
+    else
+      result := '';
   finally
     UnlockList;
   end;
