@@ -15,6 +15,8 @@ type
 
   TNaturalSortStringList = Class(TStringList)
   private
+  protected
+    Function DoCompareText(const s1,s2 : string) : PtrInt; override;
   public
     procedure Sort; override;
   End;
@@ -207,6 +209,11 @@ begin
 end;
 
 { TNaturalSortStringList }
+
+function TNaturalSortStringList.DoCompareText(const s1, s2: string): PtrInt;
+begin
+  Result:=UTF8CompareStr(s1, s2);
+end;
 
 procedure TNaturalSortStringList.Sort;
 begin
