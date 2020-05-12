@@ -18,7 +18,9 @@ type
 function GetFileSize(const FileName: string): int64;
 procedure CopyFile(const aSrc, aDest: string; FLog: ILog = nil; aProgress : TCopyProgress = nil);
 procedure KillFolder(const aFolder: string);
-function FileCount(const aFolder: string):Integer;
+function FileCount(const aFolder : string; Masks : Array of String):Integer;
+function GetFirstPath(const aPath : String; Lvl : integer = 2):String; inline;
+function GetLastPath(const aPath : String):string; inline;
 
 implementation
 
@@ -121,7 +123,7 @@ begin
   end;
 end;
 
-function FileCount(const aFolder: string): Integer;
+function FileCount(const aFolder : string; Masks : Array of String): Integer;
 var
   files: TStringList;
 begin
@@ -129,12 +131,35 @@ begin
   begin
     Files := TStringList.Create;
     try
-      GetFiles(aFolder, ['*'], Files);
+      GetFiles(aFolder, Masks, Files);
       result := Files.Count;
     finally
       Files.Free;
     end;
   end;
 end;
+
+function GetFirstPath(const aPath : String; Lvl : integer = 2):String;
+var
+  a : TStringArray;
+  i : integer;
+begin
+  a := aPath.Split([PathDelim]);
+  result := '';
+  if length(a) >= lvl then
+    for i:=0 to lvl do
+      result := result + a[i] + PathDelim;
+end;
+
+function GetLastPath(const aPath : String):string;
+var
+  a : TStringArray;
+begin
+  result := '';
+  a := aPath.Split([PathDelim]);
+  if length(a) > 0 then
+    result := a[High(a)];
+end;
+
 
 end.
