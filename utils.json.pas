@@ -12,7 +12,11 @@ type
   { TJsonObject }
 
   TJsonObject = Class(TPersistent)
+    private
+      FLock: TRTLCriticalSection;
   public
+    constructor Create;
+    destructor Destroy; override;
     class function Load(const aFileName : String; aObject : TObject):TObject;
     procedure Save(const aFileName: String);
   end;
@@ -23,6 +27,18 @@ uses
   fpjson, fpjsonrtti;
 
 { TJsonObject }
+
+constructor TJsonObject.Create;
+begin
+  InitCriticalSection(FLock);
+  inherited;
+end;
+
+destructor TJsonObject.Destroy;
+begin
+  DoneCriticalSection(FLock);
+  inherited Destroy;
+end;
 
 class function TJsonObject.Load(const aFileName: String; aObject : TObject): TObject;
 var
@@ -56,23 +72,28 @@ var
   s : String;
   t : TStringList;
 begin
-  if not DirectoryExists(ExtractFilePath(aFileName)) then
-    ForceDirectories(ExtractFilePath(aFileName));
-
-  Streamer := TJSONStreamer.Create(nil);
+  System.EnterCriticalSection(FLock);
   try
-    Streamer.Options := Streamer.Options + [jsoTStringsAsArray]; // Save strings as JSON array
-    // JSON convert and output
-    s := Streamer.ObjectToJSONString(Self);
-    t := TStringList.Create;
+    if not DirectoryExists(ExtractFilePath(aFileName)) then
+      ForceDirectories(ExtractFilePath(aFileName));
+
+    Streamer := TJSONStreamer.Create(nil);
     try
-      t.add(s);
-      t.SaveToFile(aFileName);
+      Streamer.Options := Streamer.Options + [jsoTStringsAsArray]; // Save strings as JSON array
+      // JSON convert and output
+      s := Streamer.ObjectToJSONString(Self);
+      t := TStringList.Create;
+      try
+        t.add(s);
+        t.SaveToFile(aFileName);
+      finally
+        t.free;
+      end;
     finally
-      t.free;
+      Streamer.Free;
     end;
   finally
-    Streamer.Free;
+    System.LeaveCriticalSection(FLock);
   end;
 end;
 
