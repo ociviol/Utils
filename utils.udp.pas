@@ -24,7 +24,9 @@ type
   public
     constructor Create(aUEOnReceive : TUEOnReceive = nil);
     destructor Destroy; override;
-    function Connect(const aIP : String):boolean;
+    procedure StartServer;
+    procedure StopServer;
+    function ConnectToServer(const aIP : String):boolean;
     function Send(const aStr : String):String;
     procedure Disconnect;
     property Connected : Boolean read FConnected;
@@ -51,7 +53,17 @@ begin
   inherited Destroy;
 end;
 
-function TUDP.Connect(const aIP: String): boolean;
+procedure TUDP.StartServer;
+begin
+  FUEServer.Start;
+end;
+
+procedure TUDP.StopServer;
+begin
+  FUEServer.Stop;
+end;
+
+function TUDP.ConnectToServer(const aIP: String): boolean;
 begin
   FConnected := FUEClient.Connect(aIP);
 end;

@@ -36,6 +36,7 @@ type
     procedure SetEnabled(AValue: Boolean);
   public
     constructor Create(aUEOnReceive : TUEOnReceive);
+    destructor Destroy; override;
     procedure Stop;
     procedure Start;
     property Running: Boolean read GetRunning;
@@ -63,6 +64,17 @@ constructor TUEServer.Create(aUEOnReceive: TUEOnReceive);
 begin
   FUEOnReceive:=aUEOnReceive;
   inherited Create;
+end;
+
+destructor TUEServer.Destroy;
+begin
+  if Assigned(FUEServerThread) then
+  begin
+    FUEServerThread.Terminate;
+    FUEServerThread.Waitfor;
+    FUEServerThread.Free;
+  end;
+  inherited Destroy;
 end;
 
 procedure TUEServer.Start;
@@ -105,7 +117,7 @@ var
 begin
   FSocket := TUDPBlockSocket.Create;
   try
-    FSocket.Bind('0.0.0.0', '7');
+    FSocket.Bind('10.211.55.35', '8090');
     try
       if FSocket.LastError <> 0 then
       begin
