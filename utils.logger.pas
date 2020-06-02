@@ -17,6 +17,8 @@ uses
   ;
 
 type
+  TOnFlush = procedure(const aStream : TStringStream) of object;
+
   ILog = interface
   ['{36573377-D6D3-42F0-BD07-5ED2806D392E}']
     procedure Log(const msg : string);
@@ -26,7 +28,7 @@ type
     //procedure DetachLog;
   end;
 
-function GetIlog(const Filename : string; Activate : Boolean = True; MaxLogSizeMb : integer = 10):ILog;
+function GetIlog(const Filename : string; Activate : Boolean = True; MaxLogSizeMb : integer = 10; aUDP : Boolean = false):ILog;
 function MakeLong(aHighWord, aLowWord : word):longint; inline;
 function LowWord(Value : longint):Integer; inline;
 function HighWord(Value : longint):Integer; inline;
@@ -43,14 +45,23 @@ uses
   DateUtils,
   Utils.Files,
   Utils.Searchfiles,
-  UTils.Zipfile;
+  UTils.Zipfile,
+  Utils.Udp,
+  blcksock,
+  uXmlDoc;
 
 type
+  { TLogList }
+
   TLogList = Class(TThreadList)
   private
+    FUDP : TUDP;
     FBuffer : TStringStream;
+    FClientList : TStringlist;
+
+    procedure OnServerReceive(const Data : String; Socket : TUDPBlockSocket);
   public
-    constructor Create;
+    constructor Create(aUDP : Boolean = false);
     destructor Destroy; override;
     function GetSize:Integer;
     procedure AddItem(const Msg : string);
@@ -90,12 +101,13 @@ type
     FLogToolPanel: TPanel;
     FLogList : TListbox;
     FLock : TThreadList;
+    FOnFlush : TOnFlush;
 
     procedure StopThread;
     procedure ZipLogs;
     procedure DefBtnClick(Sender : Tobject);
   public
-    constructor Create(const Filename : String; Activate : Boolean; MaxLogSizeMb : integer);
+    constructor Create(const Filename : String; Activate : Boolean; MaxLogSizeMb : integer; aUDP : Boolean = False);
     destructor Destroy; override;
     procedure Log(const msg : string);
     procedure Dump;
@@ -106,9 +118,10 @@ type
   End;
 
 
-function GetIlog(const Filename : string; Activate : Boolean = True; MaxLogSizeMb : integer = 10):ILog;
+function GetIlog(const Filename: string; Activate: Boolean;
+  MaxLogSizeMb: integer; aUDP: Boolean): ILog;
 begin
-  result := TLog.Create(Filename, Activate, MaxLogSizeMb) as ILog;
+  result := TLog.Create(Filename, Activate, MaxLogSizeMb, aUDP) as ILog;
 end;
 
 function MakeLong(aHighWord, aLowWord : word):longint; inline;
@@ -194,27 +207,71 @@ begin
   end;
 end;
 
-constructor TLogList.Create;
+procedure TLogList.OnServerReceive(const Data: String; Socket: TUDPBlockSocket);
+var
+  ln, i : integer;
+  ip : string;
+  Doc : TXmlDoc;
 begin
+  Doc := TXmlDoc.Create;
+  try
+    Doc.AsString := Data;
+    with Doc.DocumentElement do
+      for i := 0 to NbElements - 1 do
+        if Elements[i].Text = 'register' then
+        begin
+          ip := Elements[i].GetAttribute('IP');
+          FClientList.Add(ip);
+          //FClientList.Add(Elements[i].GetAttribute('IP') + '=0');
+        end;
+  finally
+    Doc.Free;
+  end;
+end;
+
+constructor TLogList.Create(aUDP: Boolean);
+begin
+  FClientList := TStringlist.Create;
   FBuffer := TStringStream.Create(''); //, TEncoding.UTF8);
-  inherited;
+  if aUDP then
+    FUDP := TUDP.Create(@OnServerReceive);
+  inherited Create;
 end;
 
 destructor TLogList.Destroy;
 begin
   FBuffer.Free;
+  FClientList.Free;
+  if Assigned(FUDP) then
+    FUDP.Free;
   inherited;
 end;
 
 procedure TLogList.Dump(aDest: TStream);
+var
+  Doc : TXmlDoc;
 begin
   with LockList do
   try
     try
       aDest.Seek(0, soEnd);
       FBuffer.Position := 0;
+      if Assigned(FUDP) and FUDP.Connected then
+      begin
+        Doc := TXmlDoc.Create;
+        try
+          with doc.CreateNewDocumentElement('data') do
+          begin
+            Text := FBuffer.DataString;
+            FUDP.Send(Doc.AsString);
+          end;
+        finally
+          Doc.Free;
+        end;
+        FBuffer.Position:=0;
+      end;
       aDest.CopyFrom(FBuffer, FBuffer.Size);
-      FBuffer.Size:= 0;
+      FBuffer.Size := 0;
     except
     end;
   finally
@@ -259,12 +316,12 @@ begin
   end;
 end;
 
-constructor TLog.Create(const Filename: String; Activate : Boolean; MaxLogSizeMb : integer);
+constructor TLog.Create(const Filename: String; Activate : Boolean; MaxLogSizeMb : integer; aUDP : Boolean);
 begin
   inherited Create;
   FFilename := Filename;
   FActive := Activate;
-  FList := TLogList.Create;
+  FList := TLogList.Create(aUDP);
   FMaxLogSizeMb := MaxLogSizeMb;
   FLogpanel := nil;
   FLogToolPanel := nil;
