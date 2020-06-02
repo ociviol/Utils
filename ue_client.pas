@@ -5,9 +5,13 @@ unit UE_Client;
 interface
 
 uses
-  {$IFDEF WINDOWS}Windows,{$ENDIF}Classes, SysUtils, DateUtils,
-
-  // synapse
+  {$IFDEF WINDOWS}
+  Windows,
+  {$ENDIF}
+  Classes, SysUtils, DateUtils,
+  {$if defined(Darwin) or defined(Linux)}
+    cthreads,
+  {$endif}
   blcksock;
 
 const

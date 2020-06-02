@@ -6,8 +6,9 @@ interface
 
 uses
   Classes, SysUtils,
-
-  // synapse
+  {$if defined(Darwin) or defined(Linux)}
+    cthreads,
+  {$endif}
   blcksock;
 
 type

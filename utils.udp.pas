@@ -5,7 +5,11 @@ unit utils.udp;
 interface
 
 uses
-  Classes, SysUtils, UE_Server, UE_Client, blcksock;
+  Classes, SysUtils,
+  {$if defined(Darwin) or defined(Linux)}
+  cthreads,
+  {$endif}
+  UE_Server, UE_Client, blcksock;
 
 type
 
