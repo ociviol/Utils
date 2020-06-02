@@ -234,7 +234,10 @@ begin
   FClientList := TStringlist.Create;
   FBuffer := TStringStream.Create(''); //, TEncoding.UTF8);
   if aUDP then
+  begin
     FUDP := TUDP.Create(@OnServerReceive);
+    FUDP.StartServer;
+  end;
   inherited Create;
 end;
 
@@ -250,20 +253,26 @@ end;
 procedure TLogList.Dump(aDest: TStream);
 var
   Doc : TXmlDoc;
+  Docs, s : string;
 begin
   with LockList do
   try
     try
       aDest.Seek(0, soEnd);
       FBuffer.Position := 0;
-      if Assigned(FUDP) and FUDP.Connected then
+      if Assigned(FUDP) then
       begin
         Doc := TXmlDoc.Create;
         try
           with doc.CreateNewDocumentElement('data') do
-          begin
             Text := FBuffer.DataString;
-            FUDP.Send(Doc.AsString);
+          Docs := Doc.AsString;
+
+          for s in FClientList do
+          begin
+            FUdp.ConnectToServer(s);
+            FUDP.Send(Docs);
+            FUDP.Disconnect;
           end;
         finally
           Doc.Free;
