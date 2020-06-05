@@ -46,7 +46,6 @@ uses
   Utils.Files,
   Utils.Searchfiles,
   UTils.Zipfile,
-  Utils.Udp,
   blcksock,
   uXmlDoc;
 
@@ -55,11 +54,11 @@ type
 
   TLogList = Class(TThreadList)
   private
-    FUDP : TUDP;
+    //FUDP : TUDP;
     FBuffer : TStringStream;
     FClientList : TStringlist;
 
-    procedure OnServerReceive(const Data : String; Socket : TUDPBlockSocket);
+    //procedure OnServerReceive(const Data : String; Socket : TUDPBlockSocket);
   public
     constructor Create(aUDP : Boolean = false);
     destructor Destroy; override;
@@ -207,6 +206,7 @@ begin
   end;
 end;
 
+{
 procedure TLogList.OnServerReceive(const Data: String; Socket: TUDPBlockSocket);
 var
   ln, i : integer;
@@ -228,16 +228,19 @@ begin
     Doc.Free;
   end;
 end;
+}
 
 constructor TLogList.Create(aUDP: Boolean);
 begin
   FClientList := TStringlist.Create;
   FBuffer := TStringStream.Create(''); //, TEncoding.UTF8);
+  {
   if aUDP then
   begin
     FUDP := TUDP.Create(@OnServerReceive);
     FUDP.StartServer;
   end;
+  }
   inherited Create;
 end;
 
@@ -245,8 +248,8 @@ destructor TLogList.Destroy;
 begin
   FBuffer.Free;
   FClientList.Free;
-  if Assigned(FUDP) then
-    FUDP.Free;
+  //if Assigned(FUDP) then
+  //  FUDP.Free;
   inherited;
 end;
 
@@ -260,6 +263,7 @@ begin
     try
       aDest.Seek(0, soEnd);
       FBuffer.Position := 0;
+      {
       if Assigned(FUDP) then
       begin
         Doc := TXmlDoc.Create;
@@ -279,6 +283,7 @@ begin
         end;
         FBuffer.Position:=0;
       end;
+      }
       aDest.CopyFrom(FBuffer, FBuffer.Size);
       FBuffer.Size := 0;
     except
