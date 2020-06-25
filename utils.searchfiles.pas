@@ -45,7 +45,7 @@ function ThreadedSearchFiles(const Path : String;
                              const str_scanning : string = '';
                              SearchFileOptions : TSearchFileOptions = [sfoRecurse]):TThread;
 
-procedure GetDirectories(const Path : String; var Dirs : TStringList);
+procedure GetDirectories(const Path : String; Dirs : TStringList);
 procedure GetFiles(const Path : string; Masks : Array of String; Files : TStringList);
 
 implementation
@@ -82,7 +82,7 @@ type
     procedure Execute; override;
   End;
 
-procedure GetDirectories(const Path : String; var Dirs : TStringList);
+procedure GetDirectories(const Path : String; Dirs : TStringList);
 var
   sr : TRawByteSearchRec;
   sPath : String;
