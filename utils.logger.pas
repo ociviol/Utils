@@ -46,7 +46,7 @@ uses
   Utils.Files,
   Utils.Searchfiles,
   UTils.Zipfile,
-  blcksock,
+  //blcksock,
   uXmlDoc;
 
 type
