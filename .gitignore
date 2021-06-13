@@ -66,3 +66,10 @@ __recovery/
 *.stat
 backup/*
 
+*.compiled
+lib/x86_64-win64/test.obj
+lib/x86_64-win64/test.res
+lib/x86_64-win64/unit1.ppu
+lib/x86_64-win64/utils.masks.ppu
+lib/x86_64-win64/utils.naturalsortstringlist.ppu
+lib/x86_64-win64/utils.searchfiles.ppu

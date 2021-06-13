@@ -25,9 +25,6 @@ function NaturalCompare(const Item1, Item2 : String): Integer;
 
 implementation
 
-uses
-  strUtils;
-
 var
   CodePage: integer;
   CodePageString: string;

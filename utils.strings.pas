@@ -170,7 +170,7 @@ begin
   try
     for i := 0 to FStringlist.Count - 1 do
       if FStringlist.Objects[i] = aObject then
-        exit(result);
+        exit(True);
     result := false;
   finally
     UnlockList;

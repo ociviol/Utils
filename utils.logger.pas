@@ -45,9 +45,10 @@ uses
   DateUtils,
   Utils.Files,
   Utils.Searchfiles,
-  UTils.Zipfile,
+  UTils.Zipfile
   //blcksock,
-  uXmlDoc;
+  //uXmlDoc
+  ;
 
 type
   { TLogList }
@@ -100,7 +101,7 @@ type
     FLogToolPanel: TPanel;
     FLogList : TListbox;
     FLock : TThreadList;
-    FOnFlush : TOnFlush;
+    //FOnFlush : TOnFlush;
 
     procedure StopThread;
     procedure ZipLogs;
@@ -254,9 +255,10 @@ begin
 end;
 
 procedure TLogList.Dump(aDest: TStream);
-var
-  Doc : TXmlDoc;
-  Docs, s : string;
+//var
+//  Doc : TXmlDoc;
+//  Docs,
+//  s : string;
 begin
   with LockList do
   try
