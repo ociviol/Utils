@@ -23,7 +23,7 @@ type
 
   TTreeviewEx = Class helper for TTreeView
   public
-    procedure AddFilePath(const aFilename : String; aObject : TObject = nil);
+    procedure AddFilePath(const aFilename : String; {%H-}aObject : TObject = nil);
   end;
 
 implementation
