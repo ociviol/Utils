@@ -614,7 +614,7 @@ begin
   begin
     DosDateTimeToDateTime(FileHeaderList[fileindex].start.lastmodfiledate,
                           FileHeaderList[fileindex].start.lastmodfiletime,
-                          FileDateTime);
+                          FileDateTime{%H-});
     DateTime := FileDateTime;
     USize := FileHeaderList[fileindex].start.uncompressedsize;
     CSize := FileHeaderList[fileindex].start.compressedsize;

@@ -73,3 +73,11 @@ lib/x86_64-win64/unit1.ppu
 lib/x86_64-win64/utils.masks.ppu
 lib/x86_64-win64/utils.naturalsortstringlist.ppu
 lib/x86_64-win64/utils.searchfiles.ppu
+unit1.pas
+unit1.lfm
+test.res
+test.lps
+test.lpr
+test.lpi
+test.ico
+lib/x86_64-win64/unit1.lfm

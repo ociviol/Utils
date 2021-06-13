@@ -61,7 +61,7 @@ type
 
     //procedure OnServerReceive(const Data : String; Socket : TUDPBlockSocket);
   public
-    constructor Create(aUDP : Boolean = false);
+    constructor Create({%H-}aUDP : Boolean = false);
     destructor Destroy; override;
     function GetSize:Integer;
     procedure AddItem(const Msg : string);
@@ -111,7 +111,7 @@ type
     destructor Destroy; override;
     procedure Log(const msg : string);
     procedure Dump;
-    procedure SetActive(const bState : boolean; aOwner : TForm = nil);
+    procedure SetActive(const bState : boolean; {%H-}aOwner : TForm = nil);
     function ArchivePath:String;
     //procedure AttachLog(aOwner : TForm);
     //procedure DetachLog;
