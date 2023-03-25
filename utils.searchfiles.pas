@@ -19,7 +19,7 @@ uses
 type
   TFilterPredicate = function(const Path: string; const SearchRec: TSearchRec): Boolean;
   TFoundFileCallback = function(const Filename : String; IsFolder : Boolean = False):TTreenode of object;
-  TProgressEvent = procedure(Sender : TObject; const ProgressID : QWord; const Pos, Max : integer; const Msg : String = '') of object;
+  TSearchFileProgressEvent = procedure(Sender : TObject; const ProgressID : QWord; const Pos, Max : integer; const Msg : String = '') of object;
   TSearchFileOption = (sfoRecurse, sfoNoFiles, sfoFolders);
   TSearchFileOptions = set of TSearchFileOption;
 
@@ -41,7 +41,7 @@ function ThreadedSearchFiles(const Path : String;
                              const Masks : array of String;
                              CallBack : TFoundFileCallback;
                              Terminate : TNotifyEvent;
-                             OnProgress : TProgressEvent = nil;
+                             OnProgress : TSearchFileProgressEvent = nil;
                              const str_scanning : string = '';
                              SearchFileOptions : TSearchFileOptions = [sfoRecurse]):TThread;
 
@@ -60,7 +60,7 @@ type
     FMasks : array of string;
     Fstr_scanning : String;
     FCallBack : TFoundFileCallback;
-    FOnProgress : TProgressEvent;
+    FOnProgress : TSearchFileProgressEvent;
     FOptions : TSearchFileOptions;
     ProgressID : QWord;
     FCur, FMax : Integer;
@@ -76,7 +76,7 @@ type
                        const Masks : array of string;
                        CallBack : TFoundFileCallback;
                        WhenTerminate : TNotifyEvent;
-                       OnProgress : TProgressEvent = nil;
+                       OnProgress : TSearchFileProgressEvent = nil;
                        const str_scanning : string = '';
                        SearchFileOptions : TSearchFileOptions = [sfoRecurse]);
     procedure Execute; override;
@@ -184,7 +184,7 @@ function ThreadedSearchFiles(const Path : String;
                              const Masks : array of String;
                              CallBack : TFoundFileCallback;
                              Terminate : TNotifyEvent;
-                             OnProgress : TProgressEvent = nil;
+                             OnProgress : TSearchFileProgressEvent = nil;
                              const str_scanning : string = '';
                              SearchFileOptions : TSearchFileOptions = [sfoRecurse]):TThread;
 begin
@@ -197,7 +197,7 @@ constructor TThreadSearchFiles.Create(const Path : String;
                                       const Masks : array of string;
                                       CallBack : TFoundFileCallback;
                                       WhenTerminate : TNotifyEvent;
-                                      OnProgress : TProgressEvent = nil;
+                                      OnProgress : TSearchFileProgressEvent = nil;
                                       const str_scanning : string = '';
                                       SearchFileOptions : TSearchFileOptions = [sfoRecurse]);
 var
