@@ -160,7 +160,7 @@ type
     procedure SetComment(AValue: String);
   protected
     endofcdrecord: TEndOfCentralDirectoryRecord;
-    endofcdrecordstartpos: longword;
+    endofcdrecordstartpos: int64;
     FActive: boolean;
     FFileName: string;
     fileheaderlist: array of TCDFileHeader;
@@ -168,7 +168,7 @@ type
     FOnFileChanged: TFileChangedEvent;
     fs: TFileStream;
 
-    function EndOfCDRecordPosition: longword;
+    function EndOfCDRecordPosition: int64;
     function FileNameIndex(AFileName: string): longint;
     function GetSearchResult(var SearchResult : TZipSearchRec): integer;
     function GetStreamCrc32(Stream: TStream): longword;
@@ -185,6 +185,7 @@ type
     procedure Reset;
     procedure SetActive(Value: boolean);
     procedure SetFileName(Value: string);
+    procedure Seek(const Offset: Int64; Origin: Word);
 //    function GetEOFCRC(Index : Integer):longint;
   public
     fileheadercount: longword;
@@ -330,7 +331,7 @@ begin
       GetEndOfCDRecord;
 
       //read all file headers from zipfile
-      fs.Seek(endofcdrecord.start.cdoffset, soFromBeginning);
+      Seek(endofcdrecord.start.cdoffset, soFromBeginning);
       for i := 1 to endofcdrecord.start.numberofcdentries do
         GetCDFileHeaders;
 
@@ -363,9 +364,34 @@ begin
   end;
 end;
 
+procedure TZipFile.Seek(const Offset: Int64; Origin: Word);
+var
+  tmp : int64;
+begin
+  if Offset > High(longint) then
+  begin
+    tmp := Offset;
+    fs.Seek(0, soFromBeginning);
+    repeat
+      if tmp > High(longint) then
+      begin
+        fs.Seek(High(longint), soCurrent);
+        tmp := tmp - High(longint);
+      end
+      else
+      begin
+        fs.Seek(tmp, soCurrent);
+        tmp := tmp - tmp;
+      end;
+    until tmp <= 0;
+  end
+  else
+   fs.Seek(Offset, soFromBeginning);
+end;
+
 procedure TZipFile.GetEndOfCDRecord;
 begin
-  fs.Seek(endofcdrecordstartpos, soFromBeginning);
+  Seek(endofcdrecordstartpos, soFromBeginning);
   
   //read fixed part
   fs.ReadBuffer(endofcdrecord.start, SizeOf(endofcdrecord.start));
@@ -392,18 +418,18 @@ begin
   endofcdrecord.start.ZIPfilecommentlength:= length(AValue);
 end;
 
-function TZipFile.EndOfCDRecordPosition: longword;
+function TZipFile.EndOfCDRecordPosition: int64;
 const
   SIGNATURE_ZIPENDOFHEADER: UInt32 = $06054B50;
 var
   I, rd: longint;
-  LBackRead, LReadSize, LMaxBack: UInt32;
+  LBackRead, LReadSize, LMaxBack: int64;
   LBackBuf: TBytes;
 begin
-  if fs.Size < $FFFF then
+  if fs.Size < $FFFFFFFF then
     LMaxBack := fs.Size
   else
-    LMaxBack := $FFFF;
+    LMaxBack := $FFFFFFFF;
   LBackRead := 4;
   SetLength(LBackBuf, $404 - 1);
   while LBackRead < LMaxBack do
@@ -444,7 +470,7 @@ end;
 function TZipFile.ReadLocalFileHeader(AOffSet: longword): TLocalFileHeader;
 begin
   result := Default(TLocalFileHeader);
-  fs.Seek(AOffset, soFromBeginning);
+  Seek(AOffset, soFromBeginning);
 
   //read local header start
   fs.ReadBuffer(Result.start, SizeOf(Result.start));
@@ -519,7 +545,7 @@ begin
   filedataoffset := FileHeaderList[index].start.reloffsetlocalheader + 30 +
                     lfh.start.filenamelength + lfh.start.extrafieldlength;
 
-  fs.Seek(filedataoffset, soFromBeginning);
+  Seek(filedataoffset, soFromBeginning);
 
   result := TMemoryStream.Create;
   result.CopyFrom(fs, FileHeaderList[index].start.compressedsize);
@@ -771,7 +797,7 @@ var
   procedure WriteLH;
   begin
     //write local file header
-    fs.Seek(localoffset, soFromBeginning);
+    Seek(localoffset, soFromBeginning);
     fs.WriteBuffer(lfh.start, SizeOf(lfh.start));
 
     //write local file header additional parameters
@@ -784,7 +810,7 @@ var
   var
     i : integer;
   begin
-    fs.Seek(endofcdrecord.start.cdoffset, soFromBeginning);
+    Seek(endofcdrecord.start.cdoffset, soFromBeginning);
     //write CD
     for i := 0 to Pred(fileheadercount) do
     begin
@@ -930,10 +956,10 @@ begin
     frompos := endbuf;
     topos := startbuf;
     repeat
-      fs.Seek(frompos, soFromBeginning);
+      Seek(frompos, soFromBeginning);
       buflen := fs.Read(buf^, Min(fs.Size - frompos, 1024));
 
-      fs.Seek(topos, soFromBeginning);
+      Seek(topos, soFromBeginning);
       fs.Write(buf^, buflen);
       
       Inc(frompos, buflen);
@@ -966,7 +992,7 @@ begin
   Dec(endofcdrecord.start.sizeofthecentraldirectory, cditemsize);
 
   //write CD to disk
-  fs.Seek(endofcdrecord.start.cdoffset, soFromBeginning);
+  Seek(endofcdrecord.start.cdoffset, soFromBeginning);
   if fileheadercount <> 0 then
     for i:= 0 to Pred(fileheadercount) do
     begin
