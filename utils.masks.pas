@@ -155,6 +155,8 @@ begin
 end;
 
 { TMask }
+const
+  lrsInvalidCharSet_ = 'The char set in mask "%s" is not valid!';
 
 procedure TMask.InitMaskString(const AValue: String; const CaseSensitive: Boolean);
 var
@@ -163,7 +165,7 @@ var
 
   procedure CharSetError;
   begin
-    raise EConvertError.CreateFmt(lrsInvalidCharSet, [AValue]);
+    raise EConvertError.CreateFmt(lrsInvalidCharSet_, [AValue]);
   end;
 
   procedure AddAnyText;
