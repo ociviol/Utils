@@ -61,7 +61,7 @@ type
 
     //procedure OnServerReceive(const Data : String; Socket : TUDPBlockSocket);
   public
-    constructor Create({%H-}aUDP : Boolean = false);
+    constructor Create(aUDP : Boolean = false);
     destructor Destroy; override;
     function GetSize:Integer;
     procedure AddItem(const Msg : string);
@@ -184,10 +184,11 @@ begin
   files := TStringlist.Create;
   try
     GetFiles(ArchivePath, mask, Files);
-    while files.count > 31 do
+    while files.count > 50 do
     begin
       if not SafeDelete(files[0]) then
         Exit;
+      Files.Clear;
       GetFiles(ArchivePath, mask, Files);
     end;
   finally
@@ -234,7 +235,7 @@ end;
 constructor TLogList.Create(aUDP: Boolean);
 begin
   FClientList := TStringlist.Create;
-  FBuffer := TStringStream.Create('', TEncoding.ANSI);
+  FBuffer := TStringStream.Create('', TEncoding.UTF8);
   {
   if aUDP then
   begin
@@ -475,18 +476,19 @@ var
   f : string;
   files : TStringList;
   st : TFileStream;
-  z : TZipFile;
 begin
-  exit;
 
   files := TStringlist.Create;
   try
     GetFiles(ExtractFilePath(FFilename), ['*.log'], Files);
     if files.Count > 0 then
-    try
       for f in files do
         if f.Contains(ExtractFileName(FFilename)) then
-          RenameFile(FFilename,  ArchivePath + ExtractFileName(FFilename));
+        try
+          RenameFile(f, ArchivePath + ExtractFileName(f));
+          //CopyFile(f, ArchivePath + ExtractFileName(f));
+        except
+        end;
       {
         begin
           st := SafeOpen(f, fmOpenRead or fmShareDenyWrite);
@@ -499,8 +501,6 @@ begin
           end;
         end;
       }
-    except
-    end;
   finally
     Files.Free;
   end;
@@ -606,8 +606,8 @@ begin
   end;
 end;
 
-//const
-//  UTF8Bom : array[0..2] of Byte = (239, 187, 191);
+const
+  UTF8Bom : array[0..2] of Byte = (239, 187, 191);
 
 procedure TLogThread.Dump;
 var
@@ -620,7 +620,7 @@ begin
     else
     begin
       f := SafeOpen(FFilename, fmCreate or fmShareDenyWrite);
-//      f.WriteBuffer(UTF8Bom, 3);
+      f.WriteBuffer(UTF8Bom, 3);
     end;
 
     if Assigned(f) then
