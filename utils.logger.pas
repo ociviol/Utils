@@ -180,7 +180,7 @@ var
   files : TStringList;
   mask : string;
 begin
-  mask := '*' + ChangeFileExt(ExtractFilename(Filename), '.zip');
+  mask := '*' + ChangeFileExt(ExtractFilename(Filename), '.log');
   files := TStringlist.Create;
   try
     GetFiles(ArchivePath, mask, Files);
@@ -234,7 +234,7 @@ end;
 constructor TLogList.Create(aUDP: Boolean);
 begin
   FClientList := TStringlist.Create;
-  FBuffer := TStringStream.Create(''); //, TEncoding.UTF8);
+  FBuffer := TStringStream.Create('', TEncoding.ANSI);
   {
   if aUDP then
   begin
@@ -286,7 +286,8 @@ begin
         FBuffer.Position:=0;
       end;
       }
-      aDest.CopyFrom(FBuffer, FBuffer.Size);
+      FBuffer.SaveToStream(aDest);
+ //     aDest.CopyFrom(FBuffer, FBuffer.Size);
       FBuffer.Size := 0;
     except
     end;
@@ -476,40 +477,32 @@ var
   st : TFileStream;
   z : TZipFile;
 begin
-  z := TZipFile.Create;
-  with z do
+  exit;
+
+  files := TStringlist.Create;
   try
-    FileName := ArchivePath +
-                FormatDateTime('yyyy-mm-dd - ', now) +
-                ChangeFileExt(ExtractFileName(FFilename), '.zip');
-
-    files := TStringlist.Create;
+    GetFiles(ExtractFilePath(FFilename), ['*.log'], Files);
+    if files.Count > 0 then
     try
-      GetFiles(ExtractFilePath(FFilename), ['*.log'], Files);
-      if files.Count > 0 then
-      try
-        Active := True;
-
-        for f in files do
-          if f.Contains(ExtractFileName(FFilename)) then
-          begin
-            st := SafeOpen(f, fmOpenRead or fmShareDenyWrite);
-            if Assigned(st) then
-            try
-              AppendStream(st, ExtractFileName(f), now);
-            finally
-              st.Free;
-              SafeDelete(f);
-            end;
+      for f in files do
+        if f.Contains(ExtractFileName(FFilename)) then
+          RenameFile(FFilename,  ArchivePath + ExtractFileName(FFilename));
+      {
+        begin
+          st := SafeOpen(f, fmOpenRead or fmShareDenyWrite);
+          if Assigned(st) then
+          try
+            AppendStream(st, ExtractFileName(f), now);
+          finally
+            st.Free;
+            SafeDelete(f);
           end;
-        Active := False;
-      except
-      end;
-    finally
-      Files.Free;
+        end;
+      }
+    except
     end;
   finally
-    z.Free;
+    Files.Free;
   end;
 end;
 
@@ -580,6 +573,8 @@ var
   st : TFileStream;
   z : TZipFile;
 begin
+  exit;
+
   if FileExists(aFilename) then
   begin
     z := TZipFile.Create;
@@ -611,8 +606,8 @@ begin
   end;
 end;
 
-const
-  UTF8Bom : array[0..2] of Byte = (239, 187, 191);
+//const
+//  UTF8Bom : array[0..2] of Byte = (239, 187, 191);
 
 procedure TLogThread.Dump;
 var
@@ -625,7 +620,7 @@ begin
     else
     begin
       f := SafeOpen(FFilename, fmCreate or fmShareDenyWrite);
-      f.WriteBuffer(UTF8Bom, 3);
+//      f.WriteBuffer(UTF8Bom, 3);
     end;
 
     if Assigned(f) then
