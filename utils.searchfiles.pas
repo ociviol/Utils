@@ -276,7 +276,11 @@ begin
       if (sr.Attr and faDirectory) = faDirectory then
       begin
          if (sr.Name <> '.') and (sr.Name <> '..') then
+         begin
+            FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(Path) + sr.Name;
             GetFiles(IncludeTrailingPathDelimiter(Path) + sr.Name);
+            Synchronize(@DoProgress);
+         end;
       end
       else
         for s in FMasks do
@@ -288,7 +292,7 @@ begin
               Exit;
 
             try
-              FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(Path) + sr.Name;
+              //FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(Path) + sr.Name;
               FFile := SysToUTF8(IncludeTrailingPathDelimiter(Path) + sr.Name);
               Synchronize(@DoCallBackFalse);
               //Synchronize(@DoProgress);
