@@ -255,7 +255,7 @@ begin
           FFile := SysToUTF8(IncludeTrailingPathDelimiter(Path) + sr.Name);
           Synchronize(@DoCallBackTrue);
           Synchronize(@DoProgress);
-          Sleep(10);
+          //Sleep(10);
         end;
     until FindNext(sr) <> 0;
   finally
@@ -291,8 +291,8 @@ begin
               FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(Path) + sr.Name;
               FFile := SysToUTF8(IncludeTrailingPathDelimiter(Path) + sr.Name);
               Synchronize(@DoCallBackFalse);
-              Synchronize(@DoProgress);
-              Sleep(10);
+              //Synchronize(@DoProgress);
+              //Sleep(10);
             except
             end;
             break;
