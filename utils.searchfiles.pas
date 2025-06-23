@@ -243,7 +243,7 @@ begin
   try
     repeat
       if (sr.Attr and faDirectory) = faDirectory then
-        if (sr.Name <> '.') and (sr.Name <> '..') then
+        if (copy(sr.Name, 1,1) <> '.') then
         begin
           GetDirectories(IncludeTrailingPathDelimiter(Path) + sr.Name);
 
@@ -275,7 +275,7 @@ begin
     repeat
       if (sr.Attr and faDirectory) = faDirectory then
       begin
-         if (sr.Name <> '.') and (sr.Name <> '..') then
+         if (copy(sr.Name, 1,1) <> '.') then
          begin
             FMsg := Fstr_scanning + IncludeTrailingPathDelimiter(Path) + sr.Name;
             GetFiles(IncludeTrailingPathDelimiter(Path) + sr.Name);
