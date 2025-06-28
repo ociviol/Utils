@@ -620,7 +620,9 @@ begin
     else
     begin
       f := SafeOpen(FFilename, fmCreate or fmShareDenyWrite);
+      {$if Defined(MsWindows)}
       f.WriteBuffer(UTF8Bom, 3);
+      {$endif}
     end;
 
     if Assigned(f) then
