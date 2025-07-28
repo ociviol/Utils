@@ -7,15 +7,15 @@ interface
 uses
   Classes, SysUtils;
 
-function CompressBlock(sIn, sOut: TStream): int64;
-function DecompressBlock(sIn, sOut: TStream; DataSize: int64): int64;
+function CompressStream(sIn, sOut: TStream): int64;
+function DecompressStream(sIn, sOut: TStream; DataSize: int64): int64;
 
 implementation
 
 uses
   zstream;
 
-function CompressBlock(sIn, sOut: TStream): int64;
+function CompressStream(sIn, sOut: TStream): int64;
 var
   cs : Tcompressionstream;
 begin
@@ -27,7 +27,7 @@ begin
   end;
 end;
 
-function DecompressBlock(sIn, sOut: TStream; DataSize: int64): int64;
+function DecompressStream(sIn, sOut: TStream; DataSize: int64): int64;
 var
   ds : TDecompressionstream;
 begin

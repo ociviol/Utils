@@ -7,8 +7,8 @@ interface
 uses
   Classes, SysUtils;
 
-function EncryptBlock(sIn, sOut : TStream; const aEncryptKey : string):int64;
-procedure DecryptBlock(sIn, sOut : TStream; BlkSz : int64; const aEncryptKey : string);
+function EncryptStream(sIn, sOut : TStream; const aEncryptKey : string):int64;
+procedure DecryptStream(sIn, sOut : TStream; BlkSz : int64; const aEncryptKey : string);
 
 
 implementation
@@ -16,11 +16,10 @@ implementation
 uses
    BlowFish;
 
-function EncryptBlock(sIn, sOut: TStream; const aEncryptKey: string): int64;
+function EncryptStream(sIn, sOut: TStream; const aEncryptKey: string): int64;
 var
   EncrytpStream : TBlowFishEncryptStream;
 begin
-  // crypt
   sIn.Position := 0;
   EncrytpStream := TBlowFishEncryptStream.Create(aEncryptKey, sOut);
   try
@@ -31,7 +30,7 @@ begin
 end;
 
 
-procedure DecryptBlock(sIn, sOut: TStream; BlkSz: int64;
+procedure DecryptStream(sIn, sOut: TStream; BlkSz: int64;
   const aEncryptKey: string);
 var
   DecrytpStream: TBlowFishDecryptStream;

@@ -18,8 +18,7 @@ uses
     FCRCTable : array[0..255] of dword;
 
     function GetCrc: dword;
-    procedure InitCRCTable;
-    procedure UpdateCrc32(const Buffer; aCount : integer);
+    procedure UpdateCrc32(const Buffer; aCount : integer); inline;
   public
     constructor Create(aSource, aDest : TStream);
 
@@ -38,31 +37,30 @@ const
   POLY = $EDB88320;
 
 constructor TCRCStream.Create(aSource, aDest: TStream);
+  procedure InitCRCTable;
+  var
+    c : dword;
+    i, j: byte;
+  begin
+    for i := 0 to 255 do
+    begin
+      c := i;
+      for j := 0 to 7 do
+      begin
+        if (c and 1) <> 0 then
+          c := (c shr 1) xor POLY
+        else
+          c := c shr 1;
+      end;
+      FCRCTable[i] := c;
+    end;
+  end;
 begin
   inherited Create;
   FCrc := $FFFFFFFF;
   FSource := aSource;
   FDest := aDest;
   InitCRCTable;
-end;
-
-procedure TCRCStream.InitCRCTable;
-var
-  c : dword;
-  i, j: byte;
-begin
-  for i := 0 to 255 do
-  begin
-    c := i;
-    for j := 0 to 7 do
-    begin
-      if (c and 1) <> 0 then
-        c := (c shr 1) xor POLY
-      else
-        c := c shr 1;
-    end;
-    FCRCTable[i] := c;
-  end;
 end;
 
 function TCRCStream.GetCrc: dword;
@@ -99,7 +97,7 @@ end;
 
 function TCRCStream.Seek(Offset: Longint; Origin: Word): Longint;
 begin
-  Result:=Origin;
+  FSource.Seek(Offset, Origin);
 end;
 
 end.
