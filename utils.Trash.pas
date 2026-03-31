@@ -1,4 +1,4 @@
-unit TrashUtils;
+unit utils.Trash;
 
 {$mode objfpc}{$H+}
 
@@ -11,7 +11,7 @@ implementation
 uses
   Classes, SysUtils, Process
   {$IFDEF Windows}, Windows, ShellApi{$ENDIF}
-  {$IFDEF Darwin}, BaseUnix{$ENDIF};
+  {$IFDEF Darwin} ,utils.TrashMacOS{$ENDIF};
 
 function MoveToTrash(const AFile: string): Boolean;
 {$IFDEF Windows}
@@ -44,20 +44,7 @@ begin
   {$ENDIF}
 
   {$IFDEF Darwin}
-  // macOS: use Finder via AppleScript (reliable trash behavior)
-  Proc := TProcess.Create(nil);
-  try
-    Proc.Executable := '/usr/bin/osascript';
-    Proc.Parameters.Add('-e');
-    Proc.Parameters.Add(
-      'tell application "Finder" to delete POSIX file "' + AFile + '"'
-    );
-    Proc.Options := [poWaitOnExit];
-    Proc.Execute;
-    Result := (Proc.ExitStatus = 0);
-  finally
-    Proc.Free;
-  end;
+  Result := MoveToTrashMac(AFile);
   {$ENDIF}
 
   {$IFDEF Linux}
